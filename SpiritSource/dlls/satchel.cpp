@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -77,9 +77,9 @@ void CSatchelCharge :: Spawn( void )
 	UTIL_SetSize(pev, Vector( -4, -4, -4), Vector(4, 4, 4));	// Uses point-sized, and can be stepped over
 	UTIL_SetOrigin( this, pev->origin );
 
-	SetTouch( SatchelSlide );
-	SetUse( DetonateUse );
-	SetThink( SatchelThink );
+	SetTouch(&CSatchelCharge :: SatchelSlide );
+	SetUse(&CSatchelCharge :: DetonateUse );
+	SetThink(&CSatchelCharge :: SatchelThink );
 	SetNextThink( 0.1 );
 
 	pev->gravity = 0.5;
@@ -322,7 +322,7 @@ void CSatchel::Holster( int skiplocal /* = 0 */ )
 	if ( !m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] && !m_chargeReady )
 	{
 		m_pPlayer->pev->weapons &= ~(1<<WEAPON_SATCHEL);
-		SetThink( DestroyItem );
+		SetThink(&CSatchel:: DestroyItem );
 		SetNextThink( 0.1 );
 	}
 }

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -24,7 +24,7 @@
 
 // For holograms, make them not solid so the player can walk through them
 //LRC- this seems to interfere with SF_MONSTER_CLIP
-#define	SF_GENERICMONSTER_NOTSOLID					 4 
+#define	SF_GENERICMONSTER_NOTSOLID					4 
 #define SF_GENERICMONSTER_PLAYERMODEL				 8
 #define SF_GENERICMONSTER_INVULNERABLE				32
 //Not implemented:

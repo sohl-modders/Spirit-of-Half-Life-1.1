@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -162,7 +162,7 @@ void CStomp::Think( void )
 				pSprite->pev->velocity = Vector(RANDOM_FLOAT(-200,200),RANDOM_FLOAT(-200,200),175);
 				// pSprite->AnimateAndDie( RANDOM_FLOAT( 8.0, 12.0 ) );
 				pSprite->SetNextThink( 0.3 );
-				pSprite->SetThink( SUB_Remove );
+				pSprite->SetThink(&CSprite:: SUB_Remove );
 				pSprite->SetTransparency( kRenderTransAdd, 255, 255, 255, 255, kRenderFxFadeFast );
 			}
 		}
@@ -1108,7 +1108,7 @@ void CGargantua::StartTask( Task_t *pTask )
 			EMIT_SOUND_DYN( ENT(pev), CHAN_VOICE, pAttackSounds[ RANDOM_LONG(0,ARRAYSIZE(pAttackSounds)-1) ], 1.0, ATTN_GARG, 0, PITCH_NORM );
 		TaskComplete();
 		break;
-
+	
 	// allow a scripted_action to make gargantua shoot flames.
 	case TASK_PLAY_SCRIPT:
 		if ( m_pCine->IsAction() && m_pCine->m_fAction == 3)
@@ -1149,7 +1149,7 @@ void CGargantua::RunTask( Task_t *pTask )
 			pev->rendercolor.z = 0;
 			StopAnimation();
 			SetNextThink( 0.15 );
-			SetThink( SUB_Remove );
+			SetThink(&CGargantua:: SUB_Remove );
 			int i;
 			int parts = MODEL_FRAMES( gGargGibModel );
 			for ( i = 0; i < 10; i++ )
@@ -1168,7 +1168,7 @@ void CGargantua::RunTask( Task_t *pTask )
 				pGib->pev->origin = pev->origin;
 				pGib->pev->velocity = UTIL_RandomBloodVector() * RANDOM_FLOAT( 300, 500 );
 				pGib->SetNextThink( 1.25 );
-				pGib->SetThink( SUB_FadeOut );
+				pGib->SetThink(&CGib:: SUB_FadeOut );
 			}
 			MESSAGE_BEGIN( MSG_PVS, SVC_TEMPENTITY, pev->origin );
 				WRITE_BYTE( TE_BREAKMODEL);
@@ -1410,7 +1410,7 @@ void SpawnExplosion( Vector center, float randomRange, float time, int magnitude
 	pExplosion->pev->spawnflags |= SF_ENVEXPLOSION_NODAMAGE;
 
 	pExplosion->Spawn();
-	pExplosion->SetThink( CBaseEntity::SUB_CallUseToggle );
+	pExplosion->SetThink(& CBaseEntity::SUB_CallUseToggle );
 	pExplosion->SetNextThink( time );
 }
 

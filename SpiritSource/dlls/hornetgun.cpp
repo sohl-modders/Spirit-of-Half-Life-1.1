@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -23,6 +23,7 @@
 #include "player.h"
 #include "hornet.h"
 #include "gamerules.h"
+
 
 enum hgun_e {
 	HGUN_IDLE1 = 0,
@@ -234,7 +235,7 @@ void CHgun::SecondaryAttack( void )
 	pHornet->pev->velocity = gpGlobals->v_forward * 1200;
 	pHornet->pev->angles = UTIL_VecToAngles( pHornet->pev->velocity );
 
-	pHornet->SetThink( CHornet::StartDart );
+	pHornet->SetThink(& CHornet::StartDart );
 
 	m_flRechargeTime = gpGlobals->time + 0.5;
 #endif
@@ -257,7 +258,6 @@ void CHgun::SecondaryAttack( void )
 	m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
 	m_flNextPrimaryAttack = m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.1;
-//	m_flTimeWeaponIdle = gpGlobals->time + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
@@ -279,7 +279,7 @@ void CHgun::WeaponIdle( void )
 {
 	Reload( );
 
-	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())//gpGlobals->time)
+	if (m_flTimeWeaponIdle > UTIL_WeaponTimeBase())
 		return;
 
 	int iAnim;
@@ -302,4 +302,4 @@ void CHgun::WeaponIdle( void )
 	SendWeaponAnim( iAnim );
 }
 
-#endif // HLDEMO_BUILD
+#endif

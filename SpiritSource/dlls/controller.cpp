@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -647,6 +647,7 @@ int CController::LookupFloat( )
 //=========================================================
 void CController :: RunTask ( Task_t *pTask )
 {
+
 	if (m_flShootEnd > gpGlobals->time)
 	{
 		Vector vecHand, vecAngle;
@@ -657,7 +658,7 @@ void CController :: RunTask ( Task_t *pTask )
 		{
 			Vector vecSrc = vecHand + pev->velocity * (m_flShootTime - gpGlobals->time);
 			Vector vecDir;
-						
+			
 			if (m_pCine != NULL || m_hEnemy != NULL)
 			{
 				if (m_pCine != NULL) // LRC- is this a script that's telling it to fire?
@@ -1205,8 +1206,8 @@ void CControllerHeadBall :: Spawn( void )
 	UTIL_SetSize(pev, Vector( 0, 0, 0), Vector(0, 0, 0));
 	UTIL_SetOrigin( this, pev->origin );
 
-	SetThink( HuntThink );
-	SetTouch( BounceTouch );
+	SetThink(&CControllerHeadBall :: HuntThink );
+	SetTouch(&CControllerHeadBall :: BounceTouch );
 
 	m_vecIdeal = Vector( 0, 0, 0 );
 
@@ -1292,7 +1293,7 @@ void CControllerHeadBall :: HuntThink( void  )
 
 		m_flNextAttack = gpGlobals->time + 3.0;
 
-		SetThink( DieThink );
+		SetThink(&CControllerHeadBall :: DieThink );
 		SetNextThink( 0.3 );
 	}
 
@@ -1399,8 +1400,8 @@ void CControllerZapBall :: Spawn( void )
 	UTIL_SetSize(pev, Vector( 0, 0, 0), Vector(0, 0, 0));
 	UTIL_SetOrigin( this, pev->origin );
 
-	SetThink( AnimateThink );
-	SetTouch( ExplodeTouch );
+	SetThink(&CControllerZapBall :: AnimateThink );
+	SetTouch(&CControllerZapBall :: ExplodeTouch );
 
 	m_hOwner = Instance( pev->owner );
 	pev->dmgtime = gpGlobals->time; // keep track of when ball spawned

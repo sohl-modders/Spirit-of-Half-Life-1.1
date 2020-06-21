@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -15,6 +15,8 @@
 //=========================================================
 // sound.cpp 
 //=========================================================
+
+#include <ctype.h>
 
 #include "extdll.h"
 #include "util.h"
@@ -200,7 +202,7 @@ void CAmbientGeneric :: Spawn( void )
 		ALERT( at_error, "ambient_generic \"%s\" at (%f, %f, %f) has no sound file\n",
 				STRING(pev->targetname), pev->origin.x, pev->origin.y, pev->origin.z );
 		SetNextThink( 0.1 );
-		SetThink( SUB_Remove );
+		SetThink(&CAmbientGeneric :: SUB_Remove );
 		return;
 	}
     pev->solid		= SOLID_NOT;
@@ -210,13 +212,13 @@ void CAmbientGeneric :: Spawn( void )
 	// of ambient sound's pitch or volume. Don't
 	// start thinking yet.
 
-	SetThink(RampThink);
+	SetThink(&CAmbientGeneric ::RampThink);
 	DontThink();
 
 	// allow on/off switching via 'use' function.
 
-	SetUse ( ToggleUse );
-
+	SetUse(&CAmbientGeneric :: ToggleUse );
+	
 	m_fActive = FALSE;
 
 	if ( FBitSet ( pev->spawnflags, AMBIENT_SOUND_NOT_LOOPING ) )
@@ -263,7 +265,7 @@ void CAmbientGeneric :: Precache( void )
 	{
 		if (m_pPlayFrom)
 		{
-			SetThink(StartPlayFrom); //LRC
+			SetThink(&CAmbientGeneric ::StartPlayFrom); //LRC
 //			EMIT_SOUND_DYN( m_pPlayFrom, m_iChannel, szSoundFile, //LRC
 //					(m_dpv.vol * 0.01), m_flAttenuation, SND_SPAWNING, m_dpv.pitch);
 
@@ -271,8 +273,8 @@ void CAmbientGeneric :: Precache( void )
 		}
 		else
 		{
-			UTIL_EmitAmbientSound ( ENT(pev), pev->origin, szSoundFile, 
-					(m_dpv.vol * 0.01), m_flAttenuation, SND_SPAWNING, m_dpv.pitch);
+		UTIL_EmitAmbientSound ( ENT(pev), pev->origin, szSoundFile, 
+				(m_dpv.vol * 0.01), m_flAttenuation, SND_SPAWNING, m_dpv.pitch);
 		}
 		SetNextThink( 0.1 );
 	}
@@ -287,7 +289,7 @@ void CAmbientGeneric :: StartPlayFrom( void )
 	EMIT_SOUND_DYN( m_pPlayFrom, m_iChannel, szSoundFile, //LRC
 			(m_dpv.vol * 0.01), m_flAttenuation, SND_SPAWNING, m_dpv.pitch);
 
-	SetThink(RampThink);
+	SetThink(&CAmbientGeneric ::RampThink);
 	SetNextThink( 0.1 );
 }
 
@@ -2000,19 +2002,19 @@ void CSpeaker :: Spawn( void )
 	{
 		ALERT( at_error, "SPEAKER with no Level/Sentence! at: %f, %f, %f\n", pev->origin.x, pev->origin.y, pev->origin.z );
 		SetNextThink( 0.1 );
-		SetThink( SUB_Remove );
+		SetThink(&CSpeaker :: SUB_Remove );
 		return;
 	}
     pev->solid		= SOLID_NOT;
     pev->movetype	= MOVETYPE_NONE;
 
 	
-	SetThink(SpeakerThink);
+	SetThink(&CSpeaker ::SpeakerThink);
 	DontThink();
 
 	// allow on/off switching via 'use' function.
 
-	SetUse ( ToggleUse );
+	SetUse(&CSpeaker :: ToggleUse );
 
 	Precache( );
 }

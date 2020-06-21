@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -21,8 +21,7 @@
 //
 
 #define FOG_LIMIT 30000
-
-#define RGB_YELLOWISH 0x00FFA000 //255,160,0 -- no longer used
+#define RGB_YELLOWISH 0x00FFA000 //255,160,0
 #define RGB_REDISH 0x00FF1010 //255,160,0
 #define RGB_GREENISH 0x0000A000 //0,160,0
 
@@ -374,6 +373,12 @@ public:
 	int MsgFunc_SayText( const char *pszName, int iSize, void *pbuf );
 	void SayTextPrint( const char *pszBuf, int iBufSize, int clientIndex = -1 );
 	void EnsureTextFitsInOneLineAndWrapIfHaveTo( int line );
+friend class CHudSpectator;
+
+private:
+
+	struct cvar_s *	m_HUD_saytext;
+	struct cvar_s *	m_HUD_saytext_time;
 };
 
 //
@@ -478,6 +483,7 @@ public:
 	int YPosition( float y, int height );
 
 	void MessageAdd( const char *pName, float time );
+	void MessageAdd(client_textmessage_t * newMessage );
 	void MessageDrawScan( client_textmessage_t *pMessage, float time );
 	void MessageScanStart( void );
 	void MessageScanNextChar( void );
@@ -537,6 +543,38 @@ private:
 //-----------------------------------------------------
 //
 
+//LRC
+//methods actually defined in tri.cpp
+
+class CShinySurface
+{
+	float m_fMinX, m_fMinY, m_fMaxX, m_fMaxY, m_fZ;
+	char m_fScale;
+	float m_fAlpha; // texture scale and brighness
+	HSPRITE m_hsprSprite;
+	char m_szSprite[128];
+
+public:
+	CShinySurface *m_pNext;
+
+	CShinySurface( float fScale, float fAlpha, float fMinX, float fMaxX, float fMinY, float fMaxY, float fZ, char *szSprite);
+	~CShinySurface();
+
+	// draw the surface as seen from the given position
+	void Draw(const vec3_t &org);
+
+	void DrawAll(const vec3_t &org);
+};
+
+//
+//-----------------------------------------------------
+//
+
+
+//LRC - for the moment, skymode has only two settings
+#define SKY_OFF 0
+#define SKY_ON  1
+
 
 
 class CHud
@@ -565,6 +603,10 @@ public:
 	int		m_Teamplay;
 	int		m_iRes;
 	cvar_t  *m_pCvarStealMouse;
+	cvar_t	*m_pCvarDraw;
+	CShinySurface *m_pShinySurface; //LRC
+	Vector	m_vecSkyPos; //LRC
+	int		m_iSkyMode;  //LRC
 
 	int m_iFontHeight;
 	int DrawHudNumber(int x, int y, int iFlags, int iNumber, int r, int g, int b );
@@ -599,6 +641,7 @@ public:
 
 	CHudAmmo		m_Ammo;
 	CHudHealth		m_Health;
+	CHudSpectator		m_Spectator;
 	CHudGeiger		m_Geiger;
 	CHudBattery		m_Battery;
 	CHudTrain		m_Train;
@@ -611,7 +654,6 @@ public:
 	CHudAmmoSecondary	m_AmmoSecondary;
 	CHudTextMessage m_TextMessage;
 	CHudStatusIcons m_StatusIcons;
-	CHudSpectator   m_Spectator;
 
 	void Init( void );
 	void VidInit( void );
@@ -626,12 +668,17 @@ public:
 	int _cdecl MsgFunc_Damage(const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_Logo(const char *pszName,  int iSize, void *pbuf);
-	int _cdecl MsgFunc_HUDColor(const char *pszName,  int iSize, void *pbuf); //LRC
 	int _cdecl MsgFunc_ResetHUD(const char *pszName,  int iSize, void *pbuf);
 	void _cdecl MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf );
-	void _cdecl MsgFunc_SetFog( const char *pszName, int iSize, void *pbuf ); //LRC
+	void _cdecl MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf );
 	int _cdecl MsgFunc_SetFOV(const char *pszName,  int iSize, void *pbuf);
 	int  _cdecl MsgFunc_Concuss( const char *pszName, int iSize, void *pbuf );
+
+	int _cdecl MsgFunc_HUDColor(const char *pszName,  int iSize, void *pbuf);		//LRC
+	void _cdecl MsgFunc_SetFog( const char *pszName, int iSize, void *pbuf );		//LRC
+	void _cdecl MsgFunc_KeyedDLight( const char *pszName, int iSize, void *pbuf );	//LRC
+	void _cdecl MsgFunc_SetSky( const char *pszName, int iSize, void *pbuf );		//LRC
+    void _cdecl MsgFunc_AddShine( const char *pszName, int iSize, void *pbuf );     //LRC
 
 	// Screen information
 	SCREENINFO	m_scrinfo;

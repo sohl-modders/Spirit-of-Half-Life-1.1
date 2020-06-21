@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -173,7 +173,7 @@ void CBreakable::Spawn( void )
 		pev->takedamage	= DAMAGE_NO;
 	else
 		pev->takedamage	= DAMAGE_YES;
-
+  
 	if (m_iClass) //LRC - might these additions cause problems?
 	{
 		pev->flags |= FL_MONSTER; 
@@ -199,11 +199,11 @@ void CBreakable::Spawn( void )
 	{
 		pev->playerclass = 1;
 	}
-	
+
 	SET_MODEL(ENT(pev), STRING(pev->model) );//set size and link into world.
 
-	SetTouch( BreakTouch );
-	SetUse( BreakUse );
+	SetTouch(&CBreakable:: BreakTouch );
+	SetUse(&CBreakable:: BreakUse );
 	if ( FBitSet( pev->spawnflags, SF_BREAK_TRIGGER_ONLY ) )		// Only break on trigger
 		SetTouch( NULL );
 
@@ -515,7 +515,7 @@ void CBreakable::BreakTouch( CBaseEntity *pOther )
 		// play creaking sound here.
 		DamageSound();
 
-		SetThink ( Die );
+		SetThink(&CBreakable:: Die );
 		SetTouch( NULL );
 		
 		if ( m_flDelay == 0 )
@@ -559,13 +559,13 @@ void CBreakable::RespawnUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 		if (m_iRespawnTime > 0)
 		{
 			// reset my respawn time
-			SetThink( RespawnThink );
+			SetThink(&CBreakable:: RespawnThink );
 			SetNextThink( m_iRespawnTime );
 		}
 		return;
 	}
 //	ALERT(at_debug,"Respawn trigger received\n");
-	SetThink( RespawnThink );
+	SetThink(&CBreakable:: RespawnThink );
 	SetNextThink( 0.1 );
 }
 
@@ -579,7 +579,7 @@ void CBreakable::RespawnThink( void )
 	{
 		// Can't respawn right now, a monster or player is in the way. Wait a bit.
 //		ALERT(at_debug,"Respawn failed, count is %d\n",count);
-		SetThink( RespawnThink );
+		SetThink(&CBreakable:: RespawnThink );
 		SetNextThink( 2 ); // CONSIDER: change this number?
 	}
 	else
@@ -587,7 +587,7 @@ void CBreakable::RespawnThink( void )
 		// fade in, don't just appear(?)
 		if (pev->spawnflags & SF_BREAK_FADE_RESPAWN)
 		{
-			SetThink( RespawnFadeThink );
+			SetThink(&CBreakable:: RespawnFadeThink );
 			SetNextThink( 0.1 );
 			pev->renderamt = 0;
 			if (m_iInitialRenderMode == kRenderNormal)
@@ -600,7 +600,7 @@ void CBreakable::RespawnThink( void )
 		pev->solid = SOLID_BSP;
 		pev->effects &= ~EF_NODRAW;
 		pev->health = m_iInitialHealth;
-		SetUse( BreakUse );
+		SetUse(&CBreakable:: BreakUse );
 		if ( !FBitSet( pev->spawnflags, SF_BREAK_TRIGGER_ONLY ) )
 			pev->takedamage	= DAMAGE_YES;
 
@@ -899,12 +899,12 @@ void CBreakable::Die( void )
 	if (m_iRespawnTime == -1)
 	{
 //		ALERT(at_debug,"Waiting for respawn trigger\n");
-		SetUse( RespawnUse );
+		SetUse(&CBreakable:: RespawnUse );
 	}
 	else if (m_iRespawnTime)
 	{
 //		ALERT(at_debug,"Respawning in %d secs\n",m_iRespawnTime);
-		SetThink( RespawnThink );
+		SetThink(&CBreakable:: RespawnThink );
 		SetNextThink( m_iRespawnTime );
 	}
 	else
@@ -914,18 +914,19 @@ void CBreakable::Die( void )
 		//tidy up
 		if (m_pHitProxy)
 		{
-			m_pHitProxy->SetThink( SUB_Remove );
+			m_pHitProxy->SetThink(&CBreakable::SUB_Remove );
 			m_pHitProxy->SetNextThink( 0.1 );
 			m_pHitProxy = NULL;
 		}
 
-		SetThink( SUB_Remove );
+	SetThink(&CBreakable::SUB_Remove );
 		SetNextThink( 0.1 );
 //		ALERT(at_console, "Set SUB_Remove\n");
 	}
 
 	if ( m_iszSpawnObject )
 		CBaseEntity::Create( (char *)STRING(m_iszSpawnObject), VecBModelOrigin(pev), pev->angles, edict() );
+
 
 	if ( Explodable() )
 	{

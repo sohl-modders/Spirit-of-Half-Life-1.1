@@ -1,9 +1,13 @@
-Spirit of Half-Life version 1.0
-Source code release, 15/12/02
+Spirit of Half-Life version 1.1
+Source code release 2/11/03
 
-This code is based (loosely) on HLSDK 2.2, but there's no need to install Spirit on top of that; for the first time, this source code release contains all the files you need to compile client.dll and spirit.dll.
+(wow, should I be scared that the last source release was almost a
+year ago?)
 
-Any problems, let me know.
+Basically, this is Spirit 1.0, ported to the HLSDK version 2.3 by
+Codiac.
+There are a couple of Dark Truths features added here, along with a
+few minor bug fixes both by Gollum and me.
 
 --
 Laurie Cheers

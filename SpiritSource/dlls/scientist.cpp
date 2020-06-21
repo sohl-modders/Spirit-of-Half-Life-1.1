@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -690,7 +690,7 @@ void CScientist :: Spawn( void )
 		pev->skin = 1;
 	
 	MonsterInit();
-	SetUse( FollowerUse );
+	SetUse(&CScientist :: FollowerUse );
 }
 
 //=========================================================
@@ -1269,7 +1269,7 @@ void CSittingScientist :: Spawn( )
 	pev->sequence = m_baseSequence + RANDOM_LONG(0,4);
 	ResetSequenceInfo( );
 	
-	SetThink (SittingThink);
+	SetThink(&CSittingScientist ::SittingThink);
 	SetNextThink( 0.1 );
 
 	DROP_TO_FLOOR ( ENT(pev) );

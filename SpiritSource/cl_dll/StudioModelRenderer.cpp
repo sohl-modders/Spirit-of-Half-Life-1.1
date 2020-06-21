@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: 
 //
@@ -896,6 +896,11 @@ void CStudioModelRenderer::StudioSetupBones ( void )
 	// calc gait animation
 	if (m_pPlayerInfo && m_pPlayerInfo->gaitsequence != 0)
 	{
+		if (m_pPlayerInfo->gaitsequence >= m_pStudioHeader->numseq) 
+		{
+			m_pPlayerInfo->gaitsequence = 0;
+		}
+
 		pseqdesc = (mstudioseqdesc_t *)((byte *)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pPlayerInfo->gaitsequence;
 
 		panim = StudioGetAnim( m_pRenderModel, pseqdesc );
@@ -924,7 +929,10 @@ void CStudioModelRenderer::StudioSetupBones ( void )
 			if ( IEngineStudio.IsHardware() )
 			{
 				ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_pbonetransform)[i]);
-				ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_plighttransform)[i]);
+
+				// MatrixCopy should be faster...
+				//ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_plighttransform)[i]);
+				MatrixCopy( (*m_pbonetransform)[i], (*m_plighttransform)[i] );
 			}
 			else
 			{
@@ -1032,7 +1040,10 @@ void CStudioModelRenderer::StudioMergeBones ( model_t *m_pSubModel )
 				if ( IEngineStudio.IsHardware() )
 				{
 					ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_pbonetransform)[i]);
-					ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_plighttransform)[i]);
+
+					// MatrixCopy should be faster...
+					//ConcatTransforms ((*m_protationmatrix), bonematrix, (*m_plighttransform)[i]);
+					MatrixCopy( (*m_pbonetransform)[i], (*m_plighttransform)[i] );
 				}
 				else
 				{
@@ -1321,6 +1332,11 @@ void CStudioModelRenderer::StudioProcessGait( entity_state_t *pplayer )
 	int iBlend;
 	float flYaw;	 // view direction relative to movement
 
+	if (m_pCurrentEntity->curstate.sequence >=  m_pStudioHeader->numseq) 
+	{
+		m_pCurrentEntity->curstate.sequence = 0;
+	}
+
 	pseqdesc = (mstudioseqdesc_t *)((byte *)m_pStudioHeader + m_pStudioHeader->seqindex) + m_pCurrentEntity->curstate.sequence;
 
 	StudioPlayerBlend( pseqdesc, &iBlend, &m_pCurrentEntity->angles[PITCH] );
@@ -1378,6 +1394,11 @@ void CStudioModelRenderer::StudioProcessGait( entity_state_t *pplayer )
 		m_pCurrentEntity->angles[YAW] += 360;
 	m_pCurrentEntity->latched.prevangles[YAW] = m_pCurrentEntity->angles[YAW];
 
+	if (pplayer->gaitsequence >= m_pStudioHeader->numseq) 
+	{
+		pplayer->gaitsequence = 0;
+	}
+
 	pseqdesc = (mstudioseqdesc_t *)((byte *)m_pStudioHeader + m_pStudioHeader->seqindex) + pplayer->gaitsequence;
 
 	// calc gait frame
@@ -1424,8 +1445,6 @@ int CStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplayer )
 		return 0;
 
 	m_pRenderModel = IEngineStudio.SetupPlayerModel( m_nPlayerIndex );
-//LRC - if you wanted to set player models with an env_customize
-//	m_pRenderModel = m_pCurrentEntity->model;
 	if (m_pRenderModel == NULL)
 		return 0;
 
@@ -1523,11 +1542,11 @@ int CStudioModelRenderer::StudioDrawPlayer( int flags, entity_state_t *pplayer )
 
 		// get remap colors
 		m_nTopColor = m_pPlayerInfo->topcolor;
+		m_nBottomColor = m_pPlayerInfo->bottomcolor;
 		if (m_nTopColor < 0)
 			m_nTopColor = 0;
 		if (m_nTopColor > 360)
 			m_nTopColor = 360;
-		m_nBottomColor = m_pPlayerInfo->bottomcolor;
 		if (m_nBottomColor < 0)
 			m_nBottomColor = 0;
 		if (m_nBottomColor > 360)
@@ -1602,16 +1621,16 @@ void CStudioModelRenderer::StudioRenderModel( void )
 	{
 		m_pCurrentEntity->curstate.renderfx = kRenderFxNone;
 		StudioRenderFinal( );
-
+		
 		if ( !IEngineStudio.IsHardware() )
 		{
 			gEngfuncs.pTriAPI->RenderMode( kRenderTransAdd );
 		}
 
-		IEngineStudio.SetForceFaceFlags( STUDIO_NF_CHROME ); // comment out for bloating effects! --LRC
+		IEngineStudio.SetForceFaceFlags( STUDIO_NF_CHROME );
 
-		gEngfuncs.pTriAPI->SpriteTexture( m_pChromeSprite, 0 ); // for some reason this only has an effect if FxGlowShell is set
-		m_pCurrentEntity->curstate.renderfx = kRenderFxGlowShell; // causes bloating/swirling chrome effects --LRC
+		gEngfuncs.pTriAPI->SpriteTexture( m_pChromeSprite, 0 );
+		m_pCurrentEntity->curstate.renderfx = kRenderFxGlowShell;
 
 		StudioRenderFinal( );
 		if ( !IEngineStudio.IsHardware() )
@@ -1696,7 +1715,6 @@ void CStudioModelRenderer::StudioRenderFinal_Hardware( void )
 	{
 		for (i=0 ; i < m_pStudioHeader->numbodyparts ; i++)
 		{
-
 			IEngineStudio.StudioSetupModel( i, (void **)&m_pBodyPart, (void **)&m_pSubModel );
 
 			if (m_fDoInterp)

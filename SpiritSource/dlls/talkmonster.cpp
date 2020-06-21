@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -852,7 +852,7 @@ void CTalkMonster :: TalkInit( void )
 	}
 
 	m_voicePitch = 100;
-}
+}	
 
 //=========================================================
 // FindNearestFriend
@@ -1484,15 +1484,15 @@ void CTalkMonster :: FollowerUse( CBaseEntity *pActivator, CBaseEntity *pCaller,
 
 	// CanFollow is now true if the monster could physically follow anyone
 	if ( pCaller != NULL && pCaller->IsPlayer() && CanFollow() )
-	{
+		{
 		if ( !IsFollowing() )
 		{
 			// Pre-disaster followers can't be used unless they've got a master to override their behaviour...
 			if (IsLockedByMaster() || (pev->spawnflags & SF_MONSTER_PREDISASTER && !m_sMaster))
 			{
 				//ALERT(at_console,"Decline\n");
-				DeclineFollowing();
-			}
+			DeclineFollowing();
+		}
 			else
 			{
 				LimitFollowers( pCaller , 1 );

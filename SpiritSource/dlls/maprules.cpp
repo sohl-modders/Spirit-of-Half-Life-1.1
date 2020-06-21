@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -346,13 +346,13 @@ void CGameText::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE use
 	if ( pev->target )
 	{
 		m_pActivator = pActivator;
-		SetThink( TriggerThink );
+		SetThink(&CGameText:: TriggerThink );
 		SetNextThink( m_textParms.fadeinTime + m_textParms.holdTime + m_textParms.fadeoutTime );
 //		ALERT(at_console, "GameText sets NextThink = %f\n", m_textParms.fadeinTime + m_textParms.holdTime + m_textParms.fadeoutTime);
-	}
+}
 	else if ( pev->spawnflags & SF_ENVTEXT_ONLY_ONCE )
 	{
-		SetThink( SUB_Remove );
+		SetThink(&CGameText:: SUB_Remove );
 		SetNextThink( 0.1 );
 	}
 }
@@ -365,7 +365,7 @@ void CGameText::TriggerThink( void )
 
 	if ( pev->spawnflags & SF_ENVTEXT_ONLY_ONCE )
 	{
-		SetThink( SUB_Remove );
+		SetThink(&CGameText:: SUB_Remove );
 		SetNextThink( 0.1 );
 	}
 }
@@ -389,6 +389,7 @@ class CGameTeamMaster : public CRulePointEntity
 public:
 	void		KeyValue( KeyValueData *pkvd );
 	void		Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+//	int			ObjectCaps( void ) { return CRulePointEntity:: ObjectCaps() | FCAP_MASTER; }
 
 	BOOL		IsTriggered( CBaseEntity *pActivator );
 	const char	*TeamID( void );

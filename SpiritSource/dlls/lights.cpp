@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -280,7 +280,7 @@ void CLight :: Spawn( void )
 		REMOVE_ENTITY(ENT(pev));
 		return;
 	}
-
+	
 	if (FBitSet(pev->spawnflags,SF_LIGHT_START_OFF))
 		m_iState = STATE_OFF;
 	else
@@ -525,13 +525,13 @@ void CLightFader::FadeThink( void )
 		if (m_iWait > -1)
 		{
 			// wait until it's time to switch off
-			SetThink( WaitThink );
+			SetThink(&CLightFader:: WaitThink );
 			SetNextThink( m_iWait );
 		}
 		else
 		{
 			// we've finished, kill the fader
-			SetThink( SUB_Remove );
+			SetThink(&CLightFader:: SUB_Remove );
 			SetNextThink( 0.1 );
 		}
 	}
@@ -541,7 +541,7 @@ void CLightFader::FadeThink( void )
 void CLightFader::WaitThink( void )
 {
 	m_pLight->SetCorrectStyle();
-	SetThink( SUB_Remove );
+	SetThink(&CLightFader:: SUB_Remove );
 	SetNextThink( 0.1 );
 }
 
@@ -635,7 +635,7 @@ void CTriggerLightstyle::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 				pFader->m_fEndTime = gpGlobals->time + m_iFade;
 				pFader->m_fStep = ((float)1)/m_iFade;
 				pFader->m_iWait = m_iWait;
-				pFader->SetThink( pFader->FadeThink );
+				pFader->SetThink(&CLightFader::FadeThink );
 				pFader->SetNextThink( 0.1 );
 			}
 			else
@@ -645,7 +645,7 @@ void CTriggerLightstyle::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 				{
 					CLightFader *pFader = GetClassPtr( (CLightFader*)NULL );
 					pFader->m_pLight = pLight;
-					pFader->SetThink( pFader->WaitThink );
+					pFader->SetThink(&CLightFader::WaitThink );
 					pFader->SetNextThink( m_iWait );
 				}
 			}

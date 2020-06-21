@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -127,7 +127,7 @@ void CBarnacle :: Spawn()
 
 	SetActivity ( ACT_IDLE );
 
-	SetThink ( BarnacleThink );
+	SetThink(&CBarnacle :: BarnacleThink );
 	SetNextThink( 0.5 );
 
 	UTIL_SetOrigin ( this, pev->origin );
@@ -197,8 +197,7 @@ void CBarnacle :: BarnacleThink ( void )
 
 				pVictim = m_hEnemy->MyMonsterPointer();
 
-				m_flKillVictimTime = gpGlobals->time + 10;// now that the victim is in place,
-										// the killing bite will be administered in 10 seconds.
+				m_flKillVictimTime = gpGlobals->time + 10;// now that the victim is in place, the killing bite will be administered in 10 seconds.
 
 				if ( pVictim )
 				{
@@ -354,7 +353,7 @@ void CBarnacle :: Killed( entvars_t *pevAttacker, int iGib )
 	StudioFrameAdvance( 0.1 );
 
 	SetNextThink( 0.1 );
-	SetThink ( WaitTillDead );
+	SetThink(&CBarnacle :: WaitTillDead );
 }
 
 //=========================================================

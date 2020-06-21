@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -93,8 +93,8 @@ void CHornet :: Spawn( void )
 	SET_MODEL(ENT( pev ), "models/hornet.mdl");
 	UTIL_SetSize( pev, Vector( -4, -4, -4 ), Vector( 4, 4, 4 ) );
 
-	SetTouch( DieTouch );
-	SetThink( StartTrack );
+	SetTouch(&CHornet :: DieTouch );
+	SetThink(&CHornet :: StartTrack );
 
 	edict_t *pSoundEnt = pev->owner;
 	if ( !pSoundEnt )
@@ -169,8 +169,8 @@ void CHornet :: StartTrack ( void )
 {
 	IgniteTrail();
 
-	SetTouch( TrackTouch );
-	SetThink( TrackTarget );
+	SetTouch(&CHornet :: TrackTouch );
+	SetThink(&CHornet :: TrackTarget );
 
 	SetNextThink( 0.1 );
 }
@@ -182,9 +182,9 @@ void CHornet :: StartDart ( void )
 {
 	IgniteTrail();
 
-	SetTouch( DartTouch );
+	SetTouch(&CHornet :: DartTouch );
 
-	SetThink( SUB_Remove );
+	SetThink(&CHornet :: SUB_Remove );
 	SetNextThink( 4 );
 }
 
@@ -257,7 +257,7 @@ void CHornet :: TrackTarget ( void )
 	if (gpGlobals->time > m_flStopAttack)
 	{
 		SetTouch( NULL );
-		SetThink( SUB_Remove );
+		SetThink(&CHornet :: SUB_Remove );
 		SetNextThink( 0.1 );
 		return;
 	}
@@ -402,18 +402,18 @@ void CHornet::DieTouch ( CBaseEntity *pOther )
 
 		switch (RANDOM_LONG(0,2))
 		{// buzz when you plug someone
-		case 0:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit1.wav", 1, ATTN_NORM);	break;
-		case 1:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit2.wav", 1, ATTN_NORM);	break;
-		case 2:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit3.wav", 1, ATTN_NORM);	break;
+			case 0:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit1.wav", 1, ATTN_NORM);	break;
+			case 1:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit2.wav", 1, ATTN_NORM);	break;
+			case 2:	EMIT_SOUND( ENT(pev), CHAN_VOICE, "hornet/ag_hornethit3.wav", 1, ATTN_NORM);	break;
 		}
-		
+			
 		pOther->TakeDamage( pev, VARS( pev->owner ), pev->dmg, DMG_BULLET );
 	}
 
 	pev->modelindex = 0;// so will disappear for the 0.1 secs we wait until NEXTTHINK gets rid
 	pev->solid = SOLID_NOT;
 
-	SetThink ( SUB_Remove );
+	SetThink(&CHornet:: SUB_Remove );
 	SetNextThink( 1 );// stick around long enough for the sound to finish!
 }
 

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -136,7 +136,7 @@ void CRecharge::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE use
 	}
 
 	SetNextThink( 0.25 );
-	SetThink(Off);
+	SetThink(&CRecharge::Off);
 
 	// Time to recharge yet?
 
@@ -189,7 +189,7 @@ void CRecharge::Recharge(void)
 	//LRC
 	if (m_iStyle >= 32) LIGHT_STYLE(m_iStyle, "a");
 	else if (m_iStyle <= -32) LIGHT_STYLE(-m_iStyle, "z");
-	SetThink( SUB_DoNothing );
+	SetThink(&CRecharge:: SUB_DoNothing );
 }
 
 void CRecharge::Off(void)
@@ -203,10 +203,10 @@ void CRecharge::Off(void)
 	if ((!m_iJuice) &&  ( ( m_iReactivate = g_pGameRules->FlHEVChargerRechargeTime() ) > 0) )
 	{
 		SetNextThink( m_iReactivate );
-		SetThink(Recharge);
+		SetThink(&CRecharge::Recharge);
 	}
 	else
-		SetThink( SUB_DoNothing );
+		SetThink(&CRecharge:: SUB_DoNothing );
 }
 
 STATE CRecharge::GetState( void )

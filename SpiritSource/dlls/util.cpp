@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -392,7 +392,7 @@ Vector UTIL_VecToAngles( const Vector &vec )
 	VEC_TO_ANGLES(vec, rgflVecOut);
 	return Vector(rgflVecOut);
 }
-
+	
 //LRC - pass in a normalised axis vector and a number of degrees, and this returns the corresponding
 // angles value for an entity.
 inline Vector UTIL_AxisRotationToAngles( const Vector &vecAxis, float flDegs )
@@ -563,7 +563,7 @@ CBaseEntity *UTIL_FindEntityByString( CBaseEntity *pStartEntity, const char *szK
 		pentEntity = pStartEntity->edict();
 	else
 		pentEntity = NULL;
-		
+
 	for (;;)
 	{
 		// Don't change this to use UTIL_FindEntityByString!

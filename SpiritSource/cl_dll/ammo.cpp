@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -21,6 +21,7 @@
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
+#include "pm_shared.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -556,7 +557,7 @@ int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 	else
 	{
 		//if ( m_pWeapon )
-		SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
+			SetCrosshair( m_pWeapon->hCrosshair, m_pWeapon->rcCrosshair, 255, 255, 255 );
 //		CONPRINT("Selecting weapon crosshair\n");
 	}
 
@@ -592,14 +593,17 @@ int CHudAmmo::MsgFunc_CurWeapon(const char *pszName, int iSize, void *pbuf )
 		return 0;
 	}
 
-	// Is player dead???
-	if ((iId == -1) && (iClip == -1))
+	if ( g_iUser1 != OBS_IN_EYE )
 	{
-		gHUD.m_fPlayerDead = TRUE;
-		gpActiveSel = NULL;
-		return 1;
+		// Is player dead???
+		if ((iId == -1) && (iClip == -1))
+		{
+			gHUD.m_fPlayerDead = TRUE;
+			gpActiveSel = NULL;
+			return 1;
+		}
+		gHUD.m_fPlayerDead = FALSE;
 	}
-	gHUD.m_fPlayerDead = FALSE;
 
 	WEAPON *pWeapon = gWR.GetWeapon( iId );
 

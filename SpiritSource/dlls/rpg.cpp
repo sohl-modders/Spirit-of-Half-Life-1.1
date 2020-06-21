@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -88,7 +88,7 @@ void CLaserSpot::Spawn( void )
 void CLaserSpot::Suspend( float flSuspendTime )
 {
 	pev->effects |= EF_NODRAW;
-
+	
 	//LRC: -1 means suspend indefinitely
 	if (flSuspendTime == -1)
 	{
@@ -96,7 +96,7 @@ void CLaserSpot::Suspend( float flSuspendTime )
 	}
 	else
 	{
-		SetThink( Revive );
+		SetThink(&CLaserSpot:: Revive );
 		SetNextThink( flSuspendTime );
 	}
 }
@@ -127,7 +127,7 @@ CRpgRocket *CRpgRocket::CreateRpgRocket( Vector vecOrigin, Vector vecAngles, CBa
 	UTIL_SetOrigin( pRocket, vecOrigin );
 	pRocket->pev->angles = vecAngles;
 	pRocket->Spawn();
-	pRocket->SetTouch( CRpgRocket::RocketTouch );
+	pRocket->SetTouch(& CRpgRocket::RocketTouch );
 	pRocket->m_pLauncher = pLauncher;// remember what RPG fired me. 
 	pRocket->m_pLauncher->m_cActiveRockets++;// register this missile as active for the launcher
 	pRocket->pev->owner = pOwner->edict();
@@ -150,8 +150,8 @@ void CRpgRocket :: Spawn( void )
 
 	pev->classname = MAKE_STRING("rpg_rocket");
 
-	SetThink( IgniteThink );
-	SetTouch( ExplodeTouch );
+	SetThink(&CRpgRocket :: IgniteThink );
+	SetTouch(&CRpgRocket :: ExplodeTouch );
 
 	pev->angles.x -= 30;
 	UTIL_MakeVectors( pev->angles );
@@ -217,7 +217,7 @@ void CRpgRocket :: IgniteThink( void  )
 	m_flIgniteTime = gpGlobals->time;
 
 	// set to follow laser spot
-	SetThink( FollowThink );
+	SetThink(&CRpgRocket :: FollowThink );
 	SetNextThink( 0.1 );
 }
 

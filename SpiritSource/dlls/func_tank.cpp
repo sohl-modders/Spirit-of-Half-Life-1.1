@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -1859,7 +1859,7 @@ void CTankSequence :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 		m_pTank = pTank;
 		if (m_fDuration)
 		{
-			SetThink( TimeOutThink );
+			SetThink(&CTankSequence :: TimeOutThink );
 			SetNextThink( m_fDuration );
 		}
 	}
@@ -1877,7 +1877,7 @@ void CTankSequence :: FacingNotify()
 {
 	if (m_iUntil == TSEQ_UNTIL_FACING)
 	{
-		SetThink( EndThink );
+		SetThink(&CTankSequence :: EndThink );
 		SetNextThink( 0 );
 	}
 	else if (m_iShoot == TSEQ_SHOOT_FACING)
@@ -1888,7 +1888,7 @@ void CTankSequence :: DeadEnemyNotify()
 {
 	if (m_iUntil == TSEQ_UNTIL_DEATH)
 	{
-		SetThink( EndThink );
+		SetThink(&CTankSequence :: EndThink );
 		SetNextThink( 0 );
 	}
 //	else

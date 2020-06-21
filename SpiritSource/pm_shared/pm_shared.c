@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -29,21 +29,12 @@
 
 #ifdef CLIENT_DLL
 	// Spectator Mode
-	#include "..\common\hltv.h"
-	float	vecNewViewAngles[3];
-	float	vecNewViewOrigin[3];
-	int		iHasNewViewAngles;
-	int		iHasNewViewOrigin;
-	int		iIsSpectator;
-	unsigned int	uiDirectorFlags;
-
 	int		iJumpSpectator;
 	float	vJumpOrigin[3];
 	float	vJumpAngles[3];
 #endif
 
 static int pm_shared_initialized = 0;
-void InterpolateAngles( float *start, float *end, float *output, float frac );
 
 #pragma warning( disable : 4305 )
 
@@ -144,10 +135,6 @@ typedef struct hull_s
 #define	CONTENTS_CURRENT_DOWN	-14
 
 #define CONTENTS_TRANSLUCENT	-15
-//LRC
-#define CONTENTS_FLYFIELD		-17
-#define CONTENTS_FLYFIELD_GRAVITY	-18
-#define CONTENTS_FOG			-19
 
 static vec3_t rgv3tStuckTable[54];
 static int rgStuckLast[MAX_CLIENTS][2];
@@ -296,39 +283,11 @@ char PM_FindTextureType( char *name )
 	return CHAR_TEX_CONCRETE;
 }
 
-void PM_PlayGroupSound( const char* szValue, int irand, float fvol )
-{
-	static char szBuf[128];
-	int i;
-	for (i = 0; szValue[i]; i++)
-	{
-		if (szValue[i] == '?')
-		{
-			strcpy(szBuf, szValue);
-			switch (irand)
-			{
-			// right foot
-			case 0:	szBuf[i] = '1';	break;
-			case 1:	szBuf[i] = '3';	break;
-			// left foot
-			case 2:	szBuf[i] = '2';	break;
-			case 3:	szBuf[i] = '4';	break;
-			default: szBuf[i] = '#';
-			}
-			pmove->PM_PlaySound( CHAN_BODY, szBuf, fvol, ATTN_NORM, 0, PITCH_NORM );
-			return;
-		}
-	}
-	pmove->PM_PlaySound( CHAN_BODY, szValue, fvol, ATTN_NORM, 0, PITCH_NORM );
-}
-
 void PM_PlayStepSound( int step, float fvol )
 {
 	static int iSkipStep = 0;
 	int irand;
 	vec3_t hvel;
-	const char* szValue;
-	int iType;
 
 	pmove->iStepLeft = !pmove->iStepLeft;
 
@@ -348,53 +307,6 @@ void PM_PlayStepSound( int step, float fvol )
 
 	if ( pmove->multiplayer && ( !g_onladder && Length( hvel ) <= 220 ) )
 		return;
-
-	//LRC - custom footstep sounds
-	switch ( step )
-	{
-	case STEP_LADDER:
-		szValue = pmove->PM_Info_ValueForKey( pmove->physinfo, "lsnd" );
-		if (szValue[0] && szValue[1])
-		{
-			PM_PlayGroupSound( szValue, irand, fvol );
-			return;
-		}
-		break;
-	case STEP_SLOSH:
-		szValue = pmove->PM_Info_ValueForKey( pmove->physinfo, "psnd" );
-		if (szValue[0] && szValue[1])
-		{
-			PM_PlayGroupSound( szValue, irand, fvol );
-			return;
-		}
-		break;
-	case STEP_WADE:
-		szValue = pmove->PM_Info_ValueForKey( pmove->physinfo, "wsnd" );
-		if (szValue[0] && szValue[1])
-		{
-			if ( iSkipStep == 0 )
-			{ iSkipStep++; return; }
-
-			if ( iSkipStep++ == 3 )
-			{ iSkipStep = 0; }
-
-			PM_PlayGroupSound( szValue, irand, fvol );
-			return;
-		}
-		break;
-	default:
-		szValue = pmove->PM_Info_ValueForKey( pmove->physinfo, "ssnd" );
-		if (szValue[0] && szValue[1])
-		{
-			PM_PlayGroupSound( szValue, irand, fvol );
-			return;
-		}
-		iType = atoi(pmove->PM_Info_ValueForKey( pmove->physinfo, "stype" ));
-		if (iType == -1)
-			step = STEP_CONCRETE;
-		else if (iType)
-			step = iType;
-	}
 
 	// irand - 0,1 for right foot, 2,3 for left foot
 	// used to alternate left and right foot
@@ -1194,7 +1106,7 @@ void PM_WalkMove ()
 	}
 
 	if (oldonground == -1 &&   // Don't walk up stairs if not on ground.
-		(pmove->waterlevel  == 0 || pmove->watertype == CONTENT_FOG))
+		pmove->waterlevel  == 0)
 		return;
 
 	if (pmove->waterjumptime)         // If we are jumping out of water, don't do anything more.
@@ -1414,7 +1326,7 @@ void PM_WaterMove (void)
 		wishvel[i] = pmove->forward[i]*pmove->cmd.forwardmove + pmove->right[i]*pmove->cmd.sidemove;
 
 	// Sinking after no other movement occurs
-	if (!pmove->cmd.forwardmove && !pmove->cmd.sidemove && !pmove->cmd.upmove && pmove->watertype != CONTENT_FLYFIELD) //LRC
+	if (!pmove->cmd.forwardmove && !pmove->cmd.sidemove && !pmove->cmd.upmove)
 		wishvel[2] -= 60;		// drift towards bottom
 	else  // Go straight up by upmove amount.
 		wishvel[2] += pmove->cmd.upmove;
@@ -1539,7 +1451,7 @@ void PM_AirMove (void)
 
 qboolean PM_InWater( void )
 {
-	return ( pmove->waterlevel > 1 && pmove->watertype != CONTENT_FOG );
+	return ( pmove->waterlevel > 1 );
 }
 
 /*
@@ -1569,7 +1481,7 @@ qboolean PM_CheckWater ()
 	// Grab point contents.
 	cont = pmove->PM_PointContents (point, &truecont );
 	// Are we under water? (not solid and not empty?)
-	if ((cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT ) || (cont >= CONTENTS_FOG && cont <= CONTENTS_FLYFIELD))
+	if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT )
 	{
 		// Set water type
 		pmove->watertype = cont;
@@ -1584,7 +1496,7 @@ qboolean PM_CheckWater ()
 		point[2] = pmove->origin[2] + heightover2;
 		cont = pmove->PM_PointContents (point, NULL );
 		// If that point is also under water...
-		if ((cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT ) || (cont >= CONTENTS_FOG && cont <= CONTENTS_FLYFIELD))
+		if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT )
 		{
 			// Set a higher water level.
 			pmove->waterlevel = 2;
@@ -1593,7 +1505,7 @@ qboolean PM_CheckWater ()
 			point[2] = pmove->origin[2] + pmove->view_ofs[2];
 
 			cont = pmove->PM_PointContents (point, NULL );
-			if ((cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT ) || cont == CONTENTS_FOG) // Flyfields never cover the eyes
+			if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT ) 
 				pmove->waterlevel = 3;  // In over our eyes
 		}
 
@@ -1828,42 +1740,6 @@ int PM_CheckStuck (void)
 	return 1;
 }
 
-#define	CHASE_DISTANCE		112		// Desired distance from target
-#define CHASE_PADDING		4		// Minimum allowable distance between the view and a solid face
-
-// Get the origin of the Observer based around the target's position and angles
-void GetChaseOrigin( vec3_t targetangles, int iTargetIndex, vec3_t offset, vec3_t *returnvec )
-{
-	vec3_t forward;
-	vec3_t vecEnd;
-	vec3_t vecStart;
-	struct pmtrace_s *trace;
-	physent_t *target;
-
-	target = &(pmove->physents[ iTargetIndex ]);
-
-	// Trace back from the target using the player's view angles
-	AngleVectors(targetangles, forward, NULL, NULL);
-
-	// Without view_ofs, just guess at adding 28 (standing player) to the origin to get the eye-height
-	VectorCopy( target->origin, vecStart );
-	vecStart[2] += 28;
-	VectorMA(offset, CHASE_DISTANCE, forward, vecEnd);
-	VectorSubtract( vecStart, vecEnd, vecEnd );
-
-	trace = pmove->PM_TraceLine( vecStart, vecEnd, 0, 2, iTargetIndex );
-
-	// Return the position
-	VectorMA( trace->endpos, CHASE_PADDING, trace->plane.normal, *returnvec );
-
-#ifdef CLIENT_DLL
-	//	pmove->Con_NPrintf( 9, "vecStart %f %f %f.\n", vecStart[0], vecStart[1], vecStart[2] );
-	//	pmove->Con_NPrintf( 10, "  vecEnd %f %f %f.\n", vecEnd[0], vecEnd[1], vecEnd[2] );
-	//	pmove->Con_NPrintf( 11, "  EndPos %f %f %f.\n", trace->endpos[0], trace->endpos[1], trace->endpos[2] );
-#endif
-}
-
-
 /*
 ===============
 PM_SpectatorMove
@@ -1879,175 +1755,16 @@ void PM_SpectatorMove (void)
 	float		fmove, smove;
 	vec3_t		wishdir;
 	float		wishspeed;
-	static	vec3_t		lastAngle;
-
-#ifdef CLIENT_DLL
-	vec3_t tempVec;
-	pmtrace_t tr;
-
-	if ( pmove->runfuncs )
-	{
-		// Set spectator flag
-		iIsSpectator = SPEC_IS_SPECTATOR;
-	}
-#endif
-
-	// Are we not roaming and locked onto a target?
-	if ( (pmove->iuser1 != OBS_ROAMING) && pmove->iuser2 )
-	{
-		vec3_t vecViewAngle;
-		vec3_t vecNewOrg;
-		vec3_t vecOffset;
-		
-		int target1,target2 = 0;
-
-		// Find the client this player's targeting
-		for (target1 = 0; target1 < pmove->numphysent; target1++)
-		{
-			if ( pmove->physents[target1].info == pmove->iuser2 )
-				break;
-		}
-
-		if (target1 == pmove->numphysent)
-		{
-#ifdef CLIENT_DLL
-			if ( pmove->runfuncs )
-			{
-				// Force the client to keep last know view
-				VectorCopy( vecNewViewOrigin, pmove->origin );
-				VectorCopy( vecNewViewAngles, pmove->angles );
-				VectorCopy( vec3_origin, pmove->velocity );
-				iHasNewViewAngles = true;
-				iHasNewViewOrigin = true;
-			}
-#endif
-			return;	// if we don't find the observers primary target, stop whole function
-		}
-
-		VectorCopy( vec3_origin, vecOffset );
-
+	// this routine keeps track of the spectators psoition
+	// there a two different main move types : track player or moce freely (OBS_ROAMING)
+	// doesn't need excate track position, only to generate PVS, so just copy
+	// targets position and real view position is calculated on client (saves server CPU)
 	
-		if ( (pmove->iuser1 == OBS_DIRECTED) && pmove->iuser3 )
-		{
-			// find cameras seconds target
-			// Find the client this player's targeting
-			for (target2 = 0; target2 < pmove->numphysent; target2++)
-			{
-				if ( pmove->physents[target2].info == pmove->iuser3 )
-					break;
-			}
-
-			if (target2 == pmove->numphysent)
-			{
-				target2 = -1; // if we didn't found the second target
-			}
-		}
-
-		// Calculate a camera position based upon the target's origin and angles
-		if ( (pmove->iuser1 == OBS_CHASE_LOCKED) )
-		{
-			// use the targets directon as viewangles
-			VectorCopy( pmove->physents[target1].angles, vecViewAngle );
-			vecViewAngle[0] = 0;
-
-#ifdef CLIENT_DLL
-			if ( pmove->runfuncs )
-			{
-				// Force the client to start smoothing both the spectator's origin and angles
-				iIsSpectator |= (SPEC_SMOOTH_ANGLES | SPEC_SMOOTH_ORIGIN);
-			}
-#endif
-		}
-		else if ( pmove->iuser1 == OBS_DIRECTED )
-		{
-			// use angles between primary and second target as viewangle
-			// tracking also seconds target 
-#ifdef CLIENT_DLL
-			if ( target2 > 0 )
-			{
-				VectorSubtract( pmove->physents[target2].origin, pmove->physents[target1].origin, vecViewAngle );
-				VectorAngles(vecViewAngle, vecViewAngle );
-				vecViewAngle[0] = -vecViewAngle[0];
-
-				if ( uiDirectorFlags & DRC_FLAG_DRAMATIC )
-					vecViewAngle[0]-=12.5f;
-				else
-					vecViewAngle[0]+=12.5f;
-
-				if ( uiDirectorFlags & DRC_FLAG_SIDE )
-					vecViewAngle[1]+=22.5f;
-				else
-					vecViewAngle[1]-=22.5f;
-
-				GetChaseOrigin( vecViewAngle, target1, vecOffset, &tempVec);
-
-				tr = *(pmove->PM_TraceLine( (float *)&tempVec, (float *)&pmove->physents[target2].origin, PM_TRACELINE_PHYSENTSONLY, 2 /*point sized hull*/, -1 ));
-
-				// if second target isn't viewable from this side, choose the other side
-				if ( tr.fraction != 1.0 )
-				{
-					if ( uiDirectorFlags & DRC_FLAG_SIDE )
-						vecViewAngle[1]-=2.0f * 22.5f;
-					else
-						vecViewAngle[1]+=2.0f * 22.5f;
-				}
-			}
-			else
-			{
-				
-				if ( target2 == -1 )
-				{
-					// we had a second target but it disappeard, keep last known view angles
-					VectorCopy( vecNewViewAngles, vecViewAngle );
-
-				}
-				else
-				{	// we have no second target, choose view direction based on
-					// entity/player direction
-					VectorCopy( pmove->physents[target1].angles, vecViewAngle );
-					vecViewAngle[1] *= -0.5f;
-				}
-			}
-
-
-			if ( pmove->runfuncs )
-			{
-				// Force the client to start smoothing both the spectator's origin and angles
-				iIsSpectator |= (SPEC_SMOOTH_ANGLES | SPEC_SMOOTH_ORIGIN);
-				InterpolateAngles( lastAngle, vecViewAngle, vecViewAngle, 0.1f );
-				VectorCopy( vecViewAngle, lastAngle );
-			}
-#endif
-		}
-		else
-		{
-			// Freelooking around the target
-			VectorCopy( pmove->angles, vecViewAngle );
-		}
-
-		GetChaseOrigin( vecViewAngle, target1, vecOffset, &vecNewOrg);
-		VectorCopy( vecNewOrg, pmove->origin );
-		VectorCopy( vecViewAngle, pmove->angles );
-		VectorCopy( vec3_origin, pmove->velocity );
-
-#ifdef CLIENT_DLL
-		if ( pmove->runfuncs )
-		{
-			// Copy the desired angles into the client global var so we can force them to the player's view
-			VectorCopy( pmove->angles, vecNewViewAngles );
-			iHasNewViewAngles = true;
-			VectorCopy( pmove->origin, vecNewViewOrigin );
-			iHasNewViewOrigin = true;
-		}
-#endif
-	}
-	else
+	if ( pmove->iuser1 == OBS_ROAMING)
 	{
-		// Move around in normal spectator method
-		// friction
 
-		#ifdef CLIENT_DLL
-		// in free roam mode, spectator can jump within level
+#ifdef CLIENT_DLL
+		// jump only in roaming mode
 		if ( iJumpSpectator )
 		{
 			VectorCopy( vJumpOrigin, pmove->origin );
@@ -2057,6 +1774,7 @@ void PM_SpectatorMove (void)
 			return;
 		}
 		#endif
+		// Move around in normal spectator method
 
 		speed = Length (pmove->velocity);
 		if (speed < 1)
@@ -2119,7 +1837,33 @@ void PM_SpectatorMove (void)
 
 		// move
 		VectorMA (pmove->origin, pmove->frametime, pmove->velocity, pmove->origin);
+	}
+	else
+	{
+		// all other modes just track some kind of target, so spectator PVS = target PVS
 
+		int target;
+
+		// no valid target ?
+		if ( pmove->iuser2 <= 0)
+			return;
+
+		// Find the client this player's targeting
+		for (target = 0; target < pmove->numphysent; target++)
+		{
+			if ( pmove->physents[target].info == pmove->iuser2 )
+				break;
+		}
+
+		if (target == pmove->numphysent)
+			return;
+
+		// use targets position as own origin for PVS
+		VectorCopy( pmove->physents[target].angles, pmove->angles );
+		VectorCopy( pmove->physents[target].origin, pmove->origin );
+
+		// no velocity
+		VectorCopy( vec3_origin, pmove->velocity );
 	}
 }
 
@@ -2318,7 +2062,6 @@ void PM_LadderMove( physent_t *pLadder )
 
 	VectorAdd( modelmins, modelmaxs, ladderCenter );
 	VectorScale( ladderCenter, 0.5, ladderCenter );
-	VectorAdd( ladderCenter, pLadder->origin, ladderCenter ); //LRC- allow for ladders moving around
 
 	pmove->movetype = MOVETYPE_FLY;
 
@@ -2726,7 +2469,7 @@ void PM_Jump (void)
 	}
 
 	// If we are in the water most of the way...
-	if (pmove->waterlevel >= 2 && pmove->watertype != CONTENTS_FOG)
+	if (pmove->waterlevel >= 2)
 	{	// swimming, not jumping
 		pmove->onground = -1;
 
@@ -2977,8 +2720,8 @@ PM_PlayWaterSounds
 void PM_PlayWaterSounds( void )
 {
 	// Did we enter or leave water?
-	if  ( ( pmove->oldwaterlevel == 0 && pmove->waterlevel != 0 && pmove->watertype > CONTENT_FLYFIELD) ||
-		  ( pmove->oldwaterlevel != 0 && pmove->waterlevel == 0 ))
+	if  ( ( pmove->oldwaterlevel == 0 && pmove->waterlevel != 0 ) ||
+		  ( pmove->oldwaterlevel != 0 && pmove->waterlevel == 0 ) )
 	{
 		switch ( pmove->RandomLong(0,3) )
 		{
@@ -3088,8 +2831,8 @@ void PM_CheckParamters( void )
 		pmove->cmd.forwardmove = 0;
 		pmove->cmd.sidemove    = 0;
 		pmove->cmd.upmove      = 0;
-		pmove->cmd.buttons     = 0; // LRC - no jump sounds when frozen!
 	}
+
 
 	PM_DropPunchAngle( pmove->punchangle );
 
@@ -3184,15 +2927,6 @@ void PM_PlayerMove ( qboolean server )
 
 	// PM_ShowClipBox();
 
-#ifdef CLIENT_DLL
-	if ( pmove->runfuncs )
-	{
-		iIsSpectator = false;
-		iHasNewViewAngles = false;
-		iHasNewViewOrigin = false;
-	}
-#endif
-
 	// Special handling for spectator and observers. (iuser1 is set if the player's in observer mode)
 	if ( pmove->spectator || pmove->iuser1 > 0 )
 	{
@@ -3215,10 +2949,6 @@ void PM_PlayerMove ( qboolean server )
 
 	// Store off the starting water level
 	pmove->oldwaterlevel = pmove->waterlevel;
-	if (pmove->watertype > CONTENT_FLYFIELD)
-		pmove->oldwaterlevel = pmove->waterlevel;
-	else
-		pmove->oldwaterlevel = 0;
 
 	// If we are not on ground, store off how fast we are moving down
 	if ( pmove->onground == -1 )
@@ -3326,7 +3056,7 @@ void PM_PlayerMove ( qboolean server )
 
 		// If we are swimming in the water, see if we are nudging against a place we can jump up out
 		//  of, and, if so, start out jump.  Otherwise, if we are not moving up, then reset jump timer to 0
-		if ( pmove->waterlevel >= 2 && pmove->watertype != CONTENT_FOG) 
+		if ( pmove->waterlevel >= 2 ) 
 		{
 			if ( pmove->waterlevel == 2 )
 			{
@@ -3570,11 +3300,20 @@ void PM_Move ( struct playermove_s *ppmove, int server )
 	}
 }
 
-int PM_GetInfo( int ent )
+int PM_GetVisEntInfo( int ent )
 {
 	if ( ent >= 0 && ent <= pmove->numvisent )
 	{
 		return pmove->visents[ ent ].info;
+	}
+	return -1;
+}
+
+int PM_GetPhysEntInfo( int ent )
+{
+	if ( ent >= 0 && ent <= pmove->numphysent)
+	{
+		return pmove->physents[ ent ].info;
 	}
 	return -1;
 }

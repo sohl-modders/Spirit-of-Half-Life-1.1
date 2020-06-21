@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -38,8 +38,6 @@ extern BEAM *pBeam2;
 
 int CHud :: MsgFunc_ResetHUD(const char *pszName, int iSize, void *pbuf )
 {
-//	CONPRINT("MSG:ResetHUD\n");
-
 	ASSERT( iSize == 0 );
 
 	// clear all hud data
@@ -65,12 +63,28 @@ int CHud :: MsgFunc_ResetHUD(const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+void CAM_ToFirstPerson(void);
+
+void CHud :: MsgFunc_ViewMode( const char *pszName, int iSize, void *pbuf )
+{
+	CAM_ToFirstPerson();
+}
+
 void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 {
 //	CONPRINT("MSG:InitHUD");
 	//LRC - clear the fog
 	g_fStartDist = 0;
 	g_fEndDist = 0;
+
+	//LRC - clear all shiny surfaces
+	if (m_pShinySurface)
+	{
+		delete m_pShinySurface;
+		m_pShinySurface = NULL;
+	}
+
+	m_iSkyMode = SKY_OFF; //LRC
 
 	// prepare all hud data
 	HUDLIST *pList = m_pHudList;
@@ -119,6 +133,74 @@ void CHud :: MsgFunc_SetFog( const char *pszName, int iSize, void *pbuf )
 	}
 }
 
+//LRC
+void CHud :: MsgFunc_KeyedDLight( const char *pszName, int iSize, void *pbuf )
+{
+//	CONPRINT("MSG:KeyedDLight");
+	BEGIN_READ( pbuf, iSize );
+
+// as-yet unused:
+//	float	decay;				// drop this each second
+//	float	minlight;			// don't add when contributing less
+//	qboolean	dark;			// subtracts light instead of adding (doesn't seem to do anything?)
+
+	int iKey = READ_BYTE();
+	dlight_t *dl = gEngfuncs.pEfxAPI->CL_AllocDlight( iKey );
+
+	int bActive = READ_BYTE();
+	if (!bActive)
+	{
+		// die instantly
+		dl->die = gEngfuncs.GetClientTime();
+	}
+	else
+	{
+		// never die
+		dl->die = gEngfuncs.GetClientTime() + 1E6;
+
+		dl->origin[0] = READ_COORD();
+		dl->origin[1] = READ_COORD();
+		dl->origin[2] = READ_COORD();
+		dl->radius = READ_BYTE();
+		dl->color.r = READ_BYTE();
+		dl->color.g = READ_BYTE();
+		dl->color.b = READ_BYTE();
+	}
+}
+
+//LRC
+void CHud :: MsgFunc_AddShine( const char *pszName, int iSize, void *pbuf )
+{
+//	CONPRINT("MSG:AddShine");
+	BEGIN_READ( pbuf, iSize );
+
+	float fScale = READ_BYTE();
+	float fAlpha = READ_BYTE()/255.0;
+	float fMinX = READ_COORD();
+	float fMaxX = READ_COORD();
+	float fMinY = READ_COORD();
+	float fMaxY = READ_COORD();
+	float fZ = READ_COORD();
+	char *szSprite = READ_STRING();
+
+//	gEngfuncs.Con_Printf("minx %f, maxx %f, miny %f, maxy %f\n", fMinX, fMaxX, fMinY, fMaxY);
+
+	CShinySurface *pSurface = new CShinySurface(fScale, fAlpha, fMinX, fMaxX, fMinY, fMaxY, fZ, szSprite);
+	pSurface->m_pNext = m_pShinySurface;
+	m_pShinySurface = pSurface;
+}
+
+//LRC
+void CHud :: MsgFunc_SetSky( const char *pszName, int iSize, void *pbuf )
+{
+//	CONPRINT("MSG:SetSky");
+	BEGIN_READ( pbuf, iSize );
+
+	m_iSkyMode = READ_BYTE();
+	m_vecSkyPos.x = READ_COORD();
+	m_vecSkyPos.y = READ_COORD();
+	m_vecSkyPos.z = READ_COORD();
+}
 
 int CHud :: MsgFunc_GameMode(const char *pszName, int iSize, void *pbuf )
 {

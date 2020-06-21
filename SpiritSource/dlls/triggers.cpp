@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -19,6 +19,8 @@
   spawn and use functions for editor-placed triggers              
 
 */
+//CODIAC - Linux needs this for tolower
+#include <ctype.h>
 
 #include "extdll.h"
 #include "util.h"
@@ -79,7 +81,7 @@ void CFrictionModifier :: Spawn( void )
 	pev->solid = SOLID_TRIGGER;
 	SET_MODEL(ENT(pev), STRING(pev->model));    // set size and link into world
 	pev->movetype = MOVETYPE_NONE;
-	SetTouch( ChangeFriction );
+	SetTouch(&CFrictionModifier :: ChangeFriction );
 }
 
 
@@ -611,8 +613,8 @@ void CMultiManager :: KeyValue( KeyValueData *pkvd )
 void CMultiManager :: Spawn( void )
 {
 	pev->solid = SOLID_NOT;
-	SetUse ( ManagerUse );
-	SetThink ( ManagerThink);
+	SetUse(&CMultiManager :: ManagerUse );
+	SetThink(&CMultiManager :: ManagerThink);
 
 	m_iState = STATE_OFF;
 
@@ -651,7 +653,7 @@ void CMultiManager :: Spawn( void )
 
 	if ( pev->spawnflags & SF_MULTIMAN_SPAWNFIRE)
 	{
-		SetThink ( UseThink );
+		SetThink(&CMultiManager :: UseThink );
 		SetUse( NULL );
 		UTIL_DesiredThink( this );
 	}
@@ -669,8 +671,8 @@ BOOL CMultiManager::HasTarget( string_t targetname )
 
 void CMultiManager :: UseThink ( void )
 {
-	SetThink( ManagerThink );
-	SetUse( ManagerUse );
+	SetThink(&CMultiManager :: ManagerThink );
+	SetUse(&CMultiManager :: ManagerUse );
 	Use( this, this, USE_TOGGLE, 0 );
 }
 
@@ -703,7 +705,7 @@ void CMultiManager :: ManagerThink ( void )
 		{
 			if (pev->spawnflags & SF_MULTIMAN_DEBUG)
 				ALERT(at_debug, "DEBUG: multi_manager \"%s\": killed.\n", STRING(pev->targetname));
-			SetThink( SUB_Remove );
+			SetThink(&CMultiManager :: SUB_Remove );
 			SetNextThink( 0.1 );
 			SetUse( NULL );
 		}
@@ -713,7 +715,7 @@ void CMultiManager :: ManagerThink ( void )
 				ALERT(at_debug, "DEBUG: multi_manager \"%s\": last burst.\n", STRING(pev->targetname));
 			m_iState = STATE_OFF;
 			SetThink( NULL );
-			SetUse ( ManagerUse );// allow manager re-use 
+			SetUse(&CMultiManager :: ManagerUse );// allow manager re-use 
 		}
 
 		int i = 0;
@@ -819,7 +821,7 @@ void CMultiManager :: ManagerThink ( void )
 			m_iState = STATE_OFF; //LRC- STATE_OFF means "yes, we've finished".
 			if ( IsClone() || pev->spawnflags & SF_MULTIMAN_ONLYONCE )
 			{
-				SetThink( SUB_Remove );
+				SetThink(&CMultiManager :: SUB_Remove );
 				SetNextThink( 0.1 );
 				SetUse( NULL );
 				if (pev->spawnflags & SF_MULTIMAN_DEBUG)
@@ -828,7 +830,7 @@ void CMultiManager :: ManagerThink ( void )
 			else
 			{
 				SetThink( NULL );
-				SetUse ( ManagerUse );// allow manager re-use 
+				SetUse(&CMultiManager :: ManagerUse );// allow manager re-use 
 				if (pev->spawnflags & SF_MULTIMAN_DEBUG)
 					ALERT(at_debug, "DEBUG: multi_manager \"%s\": last burst.\n", STRING(pev->targetname));
 			}
@@ -887,7 +889,7 @@ void CMultiManager :: ManagerUse ( CBaseEntity *pActivator, CBaseEntity *pCaller
 				m_iState = STATE_OFF;
 				if ( IsClone() || pev->spawnflags & SF_MULTIMAN_ONLYONCE )
 				{
-					SetThink( SUB_Remove );
+					SetThink(&CMultiManager :: SUB_Remove );
 					SetNextThink( 0.1 );
 					SetUse( NULL );
 					if (pev->spawnflags & SF_MULTIMAN_DEBUG)
@@ -974,7 +976,7 @@ void CMultiManager :: ManagerUse ( CBaseEntity *pActivator, CBaseEntity *pCaller
 		m_triggerType = useType;
 
 	if (pev->spawnflags & SF_MULTIMAN_LOOP)
-		SetUse( ManagerUse ); // clones won't already have this set
+		SetUse(&CMultiManager :: ManagerUse ); // clones won't already have this set
 	else
 		SetUse( NULL );// disable use until all targets have fired
 
@@ -982,12 +984,12 @@ void CMultiManager :: ManagerUse ( CBaseEntity *pActivator, CBaseEntity *pCaller
 	{
 		if (pev->spawnflags & SF_MULTIMAN_DEBUG)
 			ALERT(at_debug, "DEBUG: multi_manager \"%s\": Begin in %f seconds.\n", STRING(pev->targetname), timeOffset);
-		SetThink ( ManagerThink );
+		SetThink(&CMultiManager :: ManagerThink );
 		SetNextThink( timeOffset );
 	}
 	else
 	{
-		SetThink ( ManagerThink );
+		SetThink(&CMultiManager :: ManagerThink );
 		ManagerThink();
 	}
 }
@@ -1390,7 +1392,7 @@ IMPLEMENT_SAVERESTORE(CRenderFxFader,CBaseEntity);
 
 void CRenderFxFader :: Spawn( void )
 {
-	SetThink ( FadeThink );
+	SetThink(&CRenderFxFader :: FadeThink );
 }
 
 void CRenderFxFader :: FadeThink( void )
@@ -1416,14 +1418,14 @@ void CRenderFxFader :: FadeThink( void )
 
 		if (pev->spawnflags & SF_RENDER_KILLTARGET)
 		{
-			m_hTarget->SetThink(SUB_Remove);
+			m_hTarget->SetThink(&CRenderFxFader::SUB_Remove);
 			m_hTarget->SetNextThink(0.1);
 		}
 
 		m_hTarget = NULL;
 
 		SetNextThink( 0.1 );
-		SetThink(SUB_Remove);
+		SetThink(&CRenderFxFader ::SUB_Remove);
 	}
 	else
 	{
@@ -1479,7 +1481,7 @@ void CRenderFxManager :: Use ( CBaseEntity *pActivator, CBaseEntity *pCaller, US
 
 	if (pev->spawnflags & SF_RENDER_ONLYONCE)
 	{
-		SetThink(SUB_Remove);
+		SetThink(&CRenderFxManager ::SUB_Remove);
 		SetNextThink(0.1);
 	}
 }
@@ -2243,11 +2245,11 @@ void CTriggerHurt :: KeyValue( KeyValueData *pkvd )
 void CTriggerHurt :: Spawn( void )
 {
 	InitTrigger();
-	SetTouch ( HurtTouch );
+	SetTouch(&CTriggerHurt :: HurtTouch );
 
 	if ( !FStringNull ( pev->targetname ) )
 	{
-		SetUse ( ToggleUse );
+		SetUse(&CTriggerHurt :: ToggleUse );
 	}
 	else
 	{
@@ -2256,7 +2258,7 @@ void CTriggerHurt :: Spawn( void )
 
 	if (m_bitsDamageInflict & DMG_RADIATION)
 	{
-		SetThink ( RadiationThink );
+		SetThink(&CTriggerHurt :: RadiationThink );
 		SetNextThink( RANDOM_FLOAT(0.0, 0.5) ); 
 	}
 
@@ -2468,12 +2470,12 @@ LINK_ENTITY_TO_CLASS( trigger_hevcharge, CTriggerHevCharge );
 void CTriggerHevCharge :: Spawn( void )
 {
 	InitTrigger();
-	SetTouch ( ChargeTouch );
-	SetThink ( AnnounceThink );
+	SetTouch(&CTriggerHevCharge :: ChargeTouch );
+	SetThink(&CTriggerHevCharge :: AnnounceThink );
 
 	if ( !FStringNull ( pev->targetname ) )
 	{
-		SetUse ( ToggleUse );
+		SetUse(&CTriggerHevCharge :: ToggleUse );
 	}
 	else
 	{
@@ -2582,7 +2584,7 @@ void CTriggerMonsterJump :: Spawn ( void )
 	{// if targetted, spawn turned off
 		pev->solid = SOLID_NOT;
 		UTIL_SetOrigin( this, pev->origin ); // Unlink from trigger list
-		SetUse( ToggleUse );
+		SetUse(&CTriggerMonsterJump :: ToggleUse );
 	}
 }
 
@@ -2790,7 +2792,7 @@ void CTriggerMultiple :: Spawn( void )
 	InitTrigger();
 
 	ASSERTSZ(pev->health == 0, "trigger_multiple with health");
-	SetTouch( MultiTouch );
+	SetTouch(&CTriggerMultiple :: MultiTouch );
 	Precache();
 }
 
@@ -2853,7 +2855,7 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 
 	if (m_flWait > 0)
 	{
-		SetThink( MultiWaitOver );
+		SetThink(&CTriggerMultiple :: MultiWaitOver );
 		SetNextThink( m_flWait );
 	}
 	else
@@ -2862,7 +2864,7 @@ void CTriggerMultiple :: ActivateMultiTrigger( CBaseEntity *pActivator )
 		// called while C code is looping through area links...
 		SetTouch( NULL );
 		SetNextThink( 0.1 );
-		SetThink(  SUB_Remove );
+		SetThink(&CTriggerMultiple ::  SUB_Remove );
 	}
 }
 
@@ -3015,7 +3017,7 @@ CInOutRegister *CInOutRegister::Prune( void )
 
 			// this entity has just left the field, trigger
 			m_pField->FireOnLeaving( m_hValue );
-			SetThink( SUB_Remove );
+			SetThink(&CInOutRegister:: SUB_Remove );
 			SetNextThink( 0.1 );
 			return m_pNext->Prune();
 		}
@@ -3025,7 +3027,7 @@ CInOutRegister *CInOutRegister::Prune( void )
 		if (m_pNext)
 		{
 			// this is an invalid list entry, remove it
-			SetThink( SUB_Remove );
+			SetThink(&CInOutRegister:: SUB_Remove );
 			SetNextThink( 0.1 );
 			return m_pNext->Prune();
 		}
@@ -3152,7 +3154,7 @@ void CTriggerCounter :: Spawn( void )
 
 	if (m_cTriggersLeft == 0)
 		m_cTriggersLeft = 2;
-	SetUse( CounterUse );
+	SetUse(&CTriggerCounter :: CounterUse );
 }
 
 void CTriggerCounter::CounterUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
@@ -3338,11 +3340,11 @@ void CChangeLevel :: Spawn( void )
 
 	if (!FStringNull ( pev->targetname ) )
 	{
-		SetUse ( UseChangeLevel );
+		SetUse(&CChangeLevel :: UseChangeLevel );
 	}
 	InitTrigger();
 	if ( !(pev->spawnflags & SF_CHANGELEVEL_USEONLY) )
-		SetTouch( TouchChangeLevel );
+		SetTouch(&CChangeLevel :: TouchChangeLevel );
 //	ALERT( at_console, "TRANSITION: %s (%s)\n", m_szMapName, m_szLandmarkName );
 }
 
@@ -3660,7 +3662,7 @@ void NextLevel( void )
 	pChange->SetNextThink( 0 );
 	if (pChange->m_fNextThink)
 	{
-		pChange->SetThink( CChangeLevel::ExecuteChangeLevel );
+		pChange->SetThink(& CChangeLevel::ExecuteChangeLevel );
 		pChange->SetNextThink( 0.1 );
 	}
 }
@@ -3772,7 +3774,7 @@ void CTriggerPush :: Spawn( )
 	if ( FBitSet (pev->spawnflags, SF_TRIGGER_PUSH_START_OFF) )// if flagged to Start Turned Off, make trigger nonsolid.
 		pev->solid = SOLID_NOT;
 
-	SetUse( ToggleUse );
+	SetUse(&CTriggerPush :: ToggleUse );
 
 	UTIL_SetOrigin( this, pev->origin );		// Link into the list
 }
@@ -4062,7 +4064,7 @@ void CTriggerTeleport :: Spawn( void )
 {
 	InitTrigger();
 
-	SetTouch( TeleportTouch );
+	SetTouch(&CTriggerTeleport :: TeleportTouch );
 }
 
 void CTriggerTeleport :: TeleportTouch( CBaseEntity *pOther )
@@ -4105,6 +4107,7 @@ void CTriggerTeleport :: TeleportTouch( CBaseEntity *pOther )
 //				ALERT(at_console, "v_angle = %f %f %f\n", pOther->pev->v_angle.x, pOther->pev->v_angle.y, pOther->pev->v_angle.z);
 				pOther->pev->angles.x = pOther->pev->v_angle.x;
 //				pOther->pev->v_angle.y += ydiff;
+				pOther->pev->fixangle = TRUE;
 			}
 
 			// set new velocity
@@ -4149,9 +4152,8 @@ void CTriggerTeleport :: TeleportTouch( CBaseEntity *pOther )
 		if ( pOther->IsPlayer() )
 		{
 			pOther->pev->v_angle = pTarget->pev->angles; //LRC
+			pOther->pev->fixangle = TRUE;
 		}
-
-		pevToucher->fixangle = TRUE;
 	}
 
 	pevToucher->flags &= ~FL_ONGROUND;
@@ -4182,7 +4184,7 @@ void CTriggerSave::Spawn( void )
 	}
 
 	InitTrigger();
-	SetTouch( SaveTouch );
+	SetTouch(&CTriggerSave:: SaveTouch );
 }
 
 void CTriggerSave::SaveTouch( CBaseEntity *pOther )
@@ -4237,10 +4239,10 @@ void CTriggerEndSection::Spawn( void )
 
 	InitTrigger();
 
-	SetUse ( EndSectionUse );
+	SetUse(&CTriggerEndSection:: EndSectionUse );
 	// If it is a "use only" trigger, then don't set the touch function.
 	if ( ! (pev->spawnflags & SF_ENDSECTION_USEONLY) )
-		SetTouch( EndSectionTouch );
+		SetTouch(&CTriggerEndSection:: EndSectionTouch );
 }
 
 void CTriggerEndSection::EndSectionTouch( CBaseEntity *pOther )
@@ -4283,7 +4285,7 @@ LINK_ENTITY_TO_CLASS( trigger_gravity, CTriggerGravity );
 void CTriggerGravity::Spawn( void )
 {
 	InitTrigger();
-	SetTouch( GravityTouch );
+	SetTouch(&CTriggerGravity:: GravityTouch );
 }
 
 void CTriggerGravity::GravityTouch( CBaseEntity *pOther )
@@ -4609,7 +4611,7 @@ void CMotionThread::Think( void )
 	{
 		if (pev->spawnflags & SF_MOTION_DEBUG)
 			ALERT(at_debug, "motion_thread expires\n");
-		SetThink( SUB_Remove );
+		SetThink(&CMotionThread:: SUB_Remove );
 		SetNextThink( 0.1 );
 		return;
 	}
@@ -5228,7 +5230,7 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	SET_MODEL(ENT(pev), STRING(pActivator->pev->model) );
 
 	// follow the player down
-	SetThink( FollowTarget );
+	SetThink(&CTriggerCamera:: FollowTarget );
 	SetNextThink( 0 );
 
 	m_moveDistance = 0;

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -932,7 +932,7 @@ void CHGrunt :: HandleAnimEvent( MonsterEvent_t *pEvent )
 				CGrenade::ShootContact( pev, GetGunPosition(), vecToss );
 			}
 			else
-				CGrenade::ShootContact( pev, GetGunPosition(), m_vecTossVelocity );
+			CGrenade::ShootContact( pev, GetGunPosition(), m_vecTossVelocity );
 			m_fThrowGrenade = FALSE;
 			if (g_iSkillLevel == SKILL_HARD)
 				m_flNextGrenadeCheck = gpGlobals->time + RANDOM_FLOAT( 2, 5 );// wait a random amount of time before shooting again
@@ -2453,7 +2453,7 @@ void CHGruntRepel::Spawn( void )
 	Precache( );
 	pev->solid = SOLID_NOT;
 
-	SetUse( RepelUse );
+	SetUse(&CHGruntRepel:: RepelUse );
 }
 
 void CHGruntRepel::Precache( void )
@@ -2483,7 +2483,7 @@ void CHGruntRepel::RepelUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 	pBeam->PointEntInit( pev->origin + Vector(0,0,112), pGrunt->entindex() );
 	pBeam->SetFlags( BEAM_FSOLID );
 	pBeam->SetColor( 255, 255, 255 );
-	pBeam->SetThink( SUB_Remove );
+	pBeam->SetThink(&CBeam:: SUB_Remove );
 	pBeam->SetNextThink( -4096.0 * tr.flFraction / pGrunt->pev->velocity.z + 0.5 );
 
 	UTIL_Remove( this );

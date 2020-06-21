@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -213,7 +213,7 @@ void CWallHealth::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 	}
 
 	SetNextThink( 0.25 );
-	SetThink(Off);
+	SetThink(&CWallHealth::Off);
 
 	// Time to recharge yet?
 
@@ -252,7 +252,7 @@ void CWallHealth::Recharge(void)
 	//LRC
 	if (m_iStyle >= 32) LIGHT_STYLE(m_iStyle, "a");
 	else if (m_iStyle <= -32) LIGHT_STYLE(-m_iStyle, "z");
-	SetThink( SUB_DoNothing );
+	SetThink(&CWallHealth:: SUB_DoNothing );
 }
 
 void CWallHealth::Off(void)
@@ -266,10 +266,10 @@ void CWallHealth::Off(void)
 	if ((!m_iJuice) &&  ( ( m_iReactivate = g_pGameRules->FlHealthChargerRechargeTime() ) > 0) )
 	{
 		SetNextThink( m_iReactivate );
-		SetThink(Recharge);
+		SetThink(&CWallHealth::Recharge);
 	}
 	else
-		SetThink( SUB_DoNothing );
+		SetThink(&CWallHealth:: SUB_DoNothing );
 }
 
 STATE CWallHealth::GetState( void )

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -304,7 +304,7 @@ void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *
 						}
 						//ALERT(at_console, "Found activator \"%s\"\n", STRING(pActivator->pev->targetname));
 						found = true;
-						break;
+			break;
 					}
 				}
 				if (!found) ALERT(at_error, "Missing ')' in target value \"%s\"", inputTargetName);
@@ -331,11 +331,11 @@ void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *
 				UTIL_Remove( pTarget );
 			}
 			else
-			{
-				ALERT( at_aiconsole, "Found: %s, firing (%s)\n", STRING( pTarget->pev->classname ), targetName );
-				pTarget->Use( pActivator, pCaller, useType, value );
-			}
+		{
+			ALERT( at_aiconsole, "Found: %s, firing (%s)\n", STRING(pTarget->pev->classname), targetName );
+			pTarget->Use( pActivator, pCaller, useType, value );
 		}
+	}
 		pTarget = UTIL_FindEntityByTargetname(pTarget, targetName, inputActivator);
 	} while (pTarget);
 
@@ -365,7 +365,7 @@ void CBaseDelay :: SUB_UseTargets( CBaseEntity *pActivator, USE_TYPE useType, fl
 
 		pTemp->SetNextThink( m_flDelay );
 
-		pTemp->SetThink( DelayThink );
+		pTemp->SetThink(&CBaseDelay:: DelayThink );
 		
 		// Save the useType
 		pTemp->pev->button = (int)useType;
@@ -419,10 +419,10 @@ void SetMovedir( entvars_t *pev )
 {
 	pev->movedir = GetMovedir(pev->angles);
 	pev->angles = g_vecZero;
-}
+	}
 
 Vector GetMovedir( Vector vecAngles )
-{
+	{
 	if (vecAngles == Vector(0, -1, 0))
 	{
 		return Vector(0, 0, 1);
@@ -467,6 +467,7 @@ TYPEDESCRIPTION	CBaseToggle::m_SaveData[] =
 	DEFINE_FIELD( CBaseToggle, m_vecAngle2, FIELD_VECTOR ),		// UNDONE: Position could go through transition, but also angle?
 	DEFINE_FIELD( CBaseToggle, m_cTriggersLeft, FIELD_INTEGER ),
 	DEFINE_FIELD( CBaseToggle, m_flHeight, FIELD_FLOAT ),
+//	DEFINE_FIELD( CBaseToggle, m_hActivator, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBaseToggle, m_pfnCallWhenMoveDone, FIELD_FUNCTION ),
 	DEFINE_FIELD( CBaseToggle, m_vecFinalDest, FIELD_POSITION_VECTOR ),
 	DEFINE_FIELD( CBaseToggle, m_flLinearMoveSpeed, FIELD_FLOAT ),
@@ -504,7 +505,7 @@ void CBaseToggle::KeyValue( KeyValueData *pkvd )
 		CBaseDelay::KeyValue( pkvd );
 }
 
-
+/*
 //void CBaseToggle ::  LinearMove( Vector	vecInput, float flSpeed)
 //{
 //	LinearMove(vecInput, flSpeed);
@@ -523,14 +524,14 @@ void CBaseToggle ::  LinearMove( Vector	vecInput, float flSpeed )//, BOOL bNow )
 //	ALERT(at_console, "LMove %s: %f %f %f, speed %f\n", STRING(pev->targetname), vecInput.x, vecInput.y, vecInput.z, flSpeed);
 	ASSERTSZ(flSpeed != 0, "LinearMove:  no speed is defined!");
 //	ASSERTSZ(m_pfnCallWhenMoveDone != NULL, "LinearMove: no post-move function defined");
-
+	
 	m_flLinearMoveSpeed = flSpeed;
 	m_vecFinalDest = vecInput;
 
 //	if ((m_pMoveWith || m_pChildMoveWith))// && !bNow)
 //	{
 //		ALERT(at_console,"Setting LinearMoveNow to happen after %f\n",gpGlobals->time);
-		SetThink( LinearMoveNow );
+		SetThink(&CBaseToggle :: LinearMoveNow );
 		UTIL_DesiredThink( this );
 		//pev->nextthink = pev->ltime + 0.01;
 //	}
@@ -566,7 +567,7 @@ void CBaseToggle :: LinearMoveNow( void )
 		LinearMoveDone();
 		return;
 	}
-
+		
 	// set destdelta to the vector needed to move
 	Vector vecDestDelta = vecDest - pev->origin;
 	
@@ -575,7 +576,7 @@ void CBaseToggle :: LinearMoveNow( void )
 
 	// set nextthink to trigger a call to LinearMoveDone when dest is reached
 	SetNextThink( flTravelTime, TRUE );
-	SetThink( LinearMoveDone );
+	SetThink(&CBaseToggle :: LinearMoveDone );
 
 	// scale the destdelta vector by the time spent traveling to get velocity
 //	pev->velocity = vecDestDelta / flTravelTime;
@@ -601,7 +602,7 @@ After moving, set origin to exact final destination, call "move done" function
 	{
 		// HACK: not there yet, try waiting one more frame.
 		ALERT(at_console,"Rejecting difference %f\n",vecDiff.Length());
-		SetThink(LinearMoveFinalDone);
+		SetThink(&CBaseToggle ::LinearMoveFinalDone);
 		pev->nextthink = gpGlobals->time + 0.01;
 	}
 	else
@@ -612,7 +613,7 @@ After moving, set origin to exact final destination, call "move done" function
 
 void CBaseToggle :: LinearMoveDone( void )
 {
-	SetThink(LinearMoveDoneNow);
+	SetThink(&CBaseToggle ::LinearMoveDoneNow);
 //	ALERT(at_console, "LMD: desiredThink %s\n", STRING(pev->targetname));
 	UTIL_DesiredThink( this );
 }
@@ -683,7 +684,7 @@ void CBaseToggle :: AngularMove( Vector vecDestAngle, float flSpeed )
 //	if ((m_pMoveWith || m_pChildMoveWith))// && !bNow)
 //	{
 //		ALERT(at_console,"Setting AngularMoveNow to happen after %f\n",gpGlobals->time);
-	SetThink( AngularMoveNow );
+	SetThink(&CBaseToggle :: AngularMoveNow );
 	UTIL_DesiredThink( this );
 //	ExternalThink( 0.01 );
 //		pev->nextthink = pev->ltime + 0.01;
@@ -710,7 +711,7 @@ void CBaseToggle :: AngularMoveNow()
 		AngularMoveDone();
 		return;
 	}
-
+	
 	// set destdelta to the vector needed to move
 	Vector vecDestDelta = vecDestAngle - pev->angles;
 	
@@ -719,7 +720,7 @@ void CBaseToggle :: AngularMoveNow()
 
 	// set nextthink to trigger a call to AngularMoveDone when dest is reached
 	SetNextThink( flTravelTime, TRUE );
-	SetThink( AngularMoveDone );
+	SetThink(&CBaseToggle :: AngularMoveDone );
 
 	// scale the destdelta vector by the time spent traveling to get velocity
 	UTIL_SetAvelocity(this, vecDestDelta / flTravelTime );
@@ -727,7 +728,7 @@ void CBaseToggle :: AngularMoveNow()
 
 void CBaseToggle :: AngularMoveDone( void )
 {
-	SetThink(AngularMoveDoneNow);
+	SetThink(&CBaseToggle ::AngularMoveDoneNow);
 //	ALERT(at_console, "LMD: desiredThink %s\n", STRING(pev->targetname));
 	UTIL_DesiredThink( this );
 }
@@ -776,7 +777,7 @@ void CBaseToggle :: AxisDir( entvars_t *pev )
 	else if ( FBitSet(pev->spawnflags, SF_DOOR_ROTATE_X) )
 		pev->movedir = Vector ( 1, 0, 0 );	// around x-axis
 	else
-		pev->movedir = Vector ( 0, 1, 0 );	// around y-axis
+		pev->movedir = Vector ( 0, 1, 0 );		// around y-axis
 }
 
 

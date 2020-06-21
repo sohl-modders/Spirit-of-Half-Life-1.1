@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -15,6 +15,8 @@
 //
 // Misc utility code
 //
+#include <string.h>
+
 #ifndef ACTIVITY_H
 #include "activity.h"
 #endif
@@ -48,8 +50,7 @@ inline edict_t *FIND_ENTITY_BY_TARGET(edict_t *entStart, const char *pszName)
 }	
 
 // Keeps clutter down a bit, when writing key-value pairs
-#define WRITEKEY_INT(pf, szKeyName, iKeyValue)									\
-		ENGINE_FPRINTF(pf, "\"%s\" \"%d\"\n", szKeyName, iKeyValue)
+#define WRITEKEY_INT(pf, szKeyName, iKeyValue) ENGINE_FPRINTF(pf, "\"%s\" \"%d\"\n", szKeyName, iKeyValue)
 #define WRITEKEY_FLOAT(pf, szKeyName, flKeyValue)								\
 		ENGINE_FPRINTF(pf, "\"%s\" \"%f\"\n", szKeyName, flKeyValue)
 #define WRITEKEY_STRING(pf, szKeyName, szKeyValue)								\
@@ -80,8 +81,7 @@ typedef int BOOL;
 #define M_PI			3.14159265358979323846
 
 // Keeps clutter down a bit, when declaring external entity/global method prototypes
-#define DECLARE_GLOBAL_METHOD(MethodName) \
-		extern void DLLEXPORT MethodName( void )
+#define DECLARE_GLOBAL_METHOD(MethodName)  extern void DLLEXPORT MethodName( void )
 #define GLOBAL_METHOD(funcname)					void DLLEXPORT funcname(void)
 
 // This is the glue that hooks .MAP entity class names to our CPP classes
@@ -177,6 +177,7 @@ typedef enum
 	MONSTERSTATE_SCRIPT,
 	MONSTERSTATE_PLAYDEAD,
 	MONSTERSTATE_DEAD
+
 } MONSTERSTATE;
 
 //LRC- the values used for the new "global states" mechanism.
@@ -448,18 +449,14 @@ extern DLL_GLOBAL int			g_Language;
 #define SVC_CDTRACK			32
 #define SVC_WEAPONANIM		35
 #define SVC_ROOMTYPE		37
-#define	SVC_HLTV			50
+#define	SVC_DIRECTOR		51
 
-// prxoy director stuff
-#define DRC_EVENT			3	// informs the dircetor about ann important game event
 
-#define DRC_FLAG_PRIO_MASK		0x0F	//	priorities between 0 and 15 (15 most important)
-#define DRC_FLAG_DRAMATIC		(1<<5)
 
 // triggers
 #define	SF_TRIGGER_ALLOWMONSTERS	1// monsters allowed to fire this trigger
 #define	SF_TRIGGER_NOCLIENTS		2// players not allowed to fire this trigger
-#define SF_TRIGGER_PUSHABLES		4// pushables can fire this trigger
+#define SF_TRIGGER_PUSHABLES		4// only pushables can fire this trigger
 #define SF_TRIGGER_EVERYTHING		8// everything else can fire this trigger (e.g. gibs, rockets)
 
 // func breakable
@@ -546,7 +543,6 @@ void EMIT_GROUPNAME_SUIT(edict_t *entity, const char *groupname);
 
 #define RANDOM_SOUND_ARRAY( array ) (array) [ RANDOM_LONG(0,ARRAYSIZE( (array) )-1) ]
 
-
 #define PLAYBACK_EVENT( flags, who, index ) PLAYBACK_EVENT_FULL( flags, who, index, 0, (float *)&g_vecZero, (float *)&g_vecZero, 0.0, 0.0, 0, 0, 0, 0 );
 #define PLAYBACK_EVENT_DELAY( flags, who, index, delay ) PLAYBACK_EVENT_FULL( flags, who, index, delay, (float *)&g_vecZero, (float *)&g_vecZero, 0.0, 0.0, 0, 0, 0, 0 );
 
@@ -573,7 +569,6 @@ int UTIL_SharedRandomLong( unsigned int seed, int low, int high );
 float UTIL_SharedRandomFloat( unsigned int seed, float low, float high );
 
 float UTIL_WeaponTimeBase( void );
-
 int GetStdLightStyle (int iStyle); //LRC- declared here so it can be used by everything that
 									// needs to deal with the standard lightstyles.
 // LRC- for aliases and groups

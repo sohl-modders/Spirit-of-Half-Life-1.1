@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -75,7 +75,7 @@ static DLL_FUNCTIONS gFunctionTable =
 	SpectatorConnect,			//pfnSpectatorConnect      Called when spectator joins server
 	SpectatorDisconnect,        //pfnSpectatorDisconnect   Called when spectator leaves the server
 	SpectatorThink,				//pfnSpectatorThink        Called when spectator sends a command packet (usercmd_t)
-	
+
 	Sys_Error,					//pfnSys_Error				Called when engine has encountered an error
 
 	PM_Move,					//pfnPM_Move
@@ -129,6 +129,7 @@ int GetEntityAPI2( DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion )
 #ifndef _WIN32
 }
 #endif
+
 
 int DispatchSpawn( edict_t *pent )
 {
@@ -244,7 +245,7 @@ void DispatchThink( edict_t *pent )
 	{
 		if ( FBitSet( pEntity->pev->flags, FL_DORMANT ) )
 			ALERT( at_error, "Dormant entity %s is thinking!!\n", STRING(pEntity->pev->classname) );
-
+				
 		//if (pEntity->pev->classname) ALERT(at_console, "DispatchThink %s\n", STRING(pEntity->pev->targetname));
 		pEntity->Think();
 	}
@@ -1001,3 +1002,5 @@ CBaseEntity * CBaseEntity::Create( char *szName, const Vector &vecOrigin, const 
 	DispatchSpawn( pEntity->edict() );
 	return pEntity;
 }
+
+

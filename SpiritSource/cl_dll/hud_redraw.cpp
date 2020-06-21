@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -114,7 +114,7 @@ int CHud :: Redraw( float flTime, int intermission )
 //		if (g_fStartDist < g_iFinalStartDist)	g_fStartDist = g_iFinalStartDist;
 		if (g_fEndDist   < g_iFinalEndDist)		g_fEndDist   = g_iFinalEndDist;
 	}
-
+	
 	// Clock was reset, reset delta
 	if ( m_flTimeDelta < 0 )
 		m_flTimeDelta = 0;
@@ -128,12 +128,15 @@ int CHud :: Redraw( float flTime, int intermission )
 			m_iIntermission = intermission;
 			gViewPort->HideCommandMenu();
 			gViewPort->HideScoreBoard();
+			gViewPort->UpdateSpectatorPanel();
 		}
 		else if ( !m_iIntermission && intermission )
 		{
+			m_iIntermission = intermission;
 			gViewPort->HideCommandMenu();
 			gViewPort->HideVGUIMenu();
 			gViewPort->ShowScoreBoard();
+			gViewPort->UpdateSpectatorPanel();
 
 			// Take a screenshot if the client's got the cvar set
 			if ( CVAR_GET_FLOAT( "hud_takesshots" ) != 0 )
@@ -152,22 +155,25 @@ int CHud :: Redraw( float flTime, int intermission )
 	// if no redrawing is necessary
 	// return 0;
 	
-	HUDLIST *pList = m_pHudList;
-
-	while (pList)
+	if ( m_pCvarDraw->value )
 	{
-		if ( !intermission )
-		{
-			if ( (pList->p->m_iFlags & HUD_ACTIVE) && !(m_iHideHUDDisplay & HIDEHUD_ALL) )
-				pList->p->Draw(flTime);
-		}
-		else
-		{  // it's an intermission,  so only draw hud elements that are set to draw during intermissions
-			if ( pList->p->m_iFlags & HUD_INTERMISSION )
-				pList->p->Draw( flTime );
-		}
+		HUDLIST *pList = m_pHudList;
 
-		pList = pList->pNext;
+		while (pList)
+		{
+			if ( !intermission )
+			{
+				if ( (pList->p->m_iFlags & HUD_ACTIVE) && !(m_iHideHUDDisplay & HIDEHUD_ALL) )
+					pList->p->Draw(flTime);
+			}
+			else
+			{  // it's an intermission,  so only draw hud elements that are set to draw during intermissions
+				if ( pList->p->m_iFlags & HUD_INTERMISSION )
+					pList->p->Draw( flTime );
+			}
+
+			pList = pList->pNext;
+		}
 	}
 
 	// are we in demo mode? do we need to draw the logo in the top corner?

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -87,6 +87,20 @@ typedef enum
 
 
 //NB: changing this structure will cause problems! --LRC
+
+#define MAX_ID_RANGE 2048
+#define SBAR_STRING_SIZE 128
+
+enum sbar_data
+{
+	SBAR_ID_TARGETNAME = 1,
+	SBAR_ID_TARGETHEALTH,
+	SBAR_ID_TARGETARMOR,
+	SBAR_END,
+};
+
+#define CHAT_INTERVAL 1.0f
+
 class CBasePlayer : public CBaseMonster
 {
 public:
@@ -303,6 +317,18 @@ public:
 	float m_flAmmoStartCharge;
 	float m_flPlayAftershock;
 	float m_flNextAmmoBurn;// while charging, when to absorb another unit of player's ammo?
+	
+	//Player ID
+	void InitStatusBar( void );
+	void UpdateStatusBar( void );
+	int m_izSBarState[ SBAR_END ];
+	float m_flNextSBarUpdateTime;
+	float m_flStatusBarDisappearDelay;
+	char m_SbarString0[ SBAR_STRING_SIZE ];
+	char m_SbarString1[ SBAR_STRING_SIZE ];
+	
+	float m_flNextChatTime;
+	
 };
 
 #define AUTOAIM_2DEGREES  0.0348994967025

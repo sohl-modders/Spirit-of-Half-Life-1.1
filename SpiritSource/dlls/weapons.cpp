@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -478,8 +478,8 @@ void CBasePlayerItem :: FallInit( void )
 	UTIL_SetOrigin( this, pev->origin );
 	UTIL_SetSize(pev, Vector( 0, 0, 0), Vector(0, 0, 0) );//pointsize until it lands on the ground.
 	
-	SetTouch( DefaultTouch );
-	SetThink( FallThink );
+	SetTouch(&CBasePlayerItem :: DefaultTouch );
+	SetThink(&CBasePlayerItem :: FallThink );
 
 	SetNextThink( 0.1 );
 }
@@ -529,7 +529,7 @@ void CBasePlayerItem::Materialize( void )
 	pev->solid = SOLID_TRIGGER;
 
 	UTIL_SetOrigin( this, pev->origin );// link into world.
-	SetTouch (DefaultTouch);
+	SetTouch(&CBasePlayerItem::DefaultTouch);
 	SetThink (NULL);
 
 }
@@ -582,7 +582,7 @@ CBaseEntity* CBasePlayerItem::Respawn( void )
 	{
 		pNewWeapon->pev->effects |= EF_NODRAW;// invisible for now
 		pNewWeapon->SetTouch( NULL );// no touch
-		pNewWeapon->SetThink( AttemptToMaterialize );
+		pNewWeapon->SetThink(&CBasePlayerItem:: AttemptToMaterialize );
 
 		DROP_TO_FLOOR ( ENT(pev) );
 
@@ -740,14 +740,14 @@ int CBasePlayerItem::AddToPlayer( CBasePlayer *pPlayer )
 void CBasePlayerItem::Drop( void )
 {
 	SetTouch( NULL );
-	SetThink(SUB_Remove);
+	SetThink(&CBasePlayerItem::SUB_Remove);
 	SetNextThink( 0.1 );
 }
 
 void CBasePlayerItem::Kill( void )
 {
 	SetTouch( NULL );
-	SetThink(SUB_Remove);
+	SetThink(&CBasePlayerItem::SUB_Remove);
 	SetNextThink( 0.1 );
 }
 
@@ -1074,7 +1074,7 @@ void CBasePlayerAmmo::Spawn( void )
 	UTIL_SetSize(pev, Vector(-16, -16, 0), Vector(16, 16, 16));
 	UTIL_SetOrigin( this, pev->origin );
 
-	SetTouch( DefaultTouch );
+	SetTouch(&CBasePlayerAmmo:: DefaultTouch );
 }
 
 CBaseEntity* CBasePlayerAmmo::Respawn( void )
@@ -1084,7 +1084,7 @@ CBaseEntity* CBasePlayerAmmo::Respawn( void )
 
 	UTIL_SetOrigin( this, g_pGameRules->VecAmmoRespawnSpot( this ) );// move to wherever I'm supposed to repawn.
 
-	SetThink( Materialize );
+	SetThink(&CBasePlayerAmmo:: Materialize );
 	AbsoluteNextThink( g_pGameRules->FlAmmoRespawnTime( this ) );
 
 	return this;
@@ -1100,7 +1100,7 @@ void CBasePlayerAmmo::Materialize( void )
 		pev->effects |= EF_MUZZLEFLASH;
 	}
 
-	SetTouch( DefaultTouch );
+	SetTouch(&CBasePlayerAmmo:: DefaultTouch );
 }
 
 void CBasePlayerAmmo :: DefaultTouch( CBaseEntity *pOther )
@@ -1119,7 +1119,7 @@ void CBasePlayerAmmo :: DefaultTouch( CBaseEntity *pOther )
 		else
 		{
 			SetTouch( NULL );
-			SetThink(SUB_Remove);
+			SetThink(&CBasePlayerAmmo ::SUB_Remove);
 			SetNextThink( 0.1 );
 		}
 	}
@@ -1127,7 +1127,7 @@ void CBasePlayerAmmo :: DefaultTouch( CBaseEntity *pOther )
 	{
 		// evil impulse 101 hack, kill always
 		SetTouch( NULL );
-		SetThink(SUB_Remove);
+		SetThink(&CBasePlayerAmmo ::SUB_Remove);
 		SetNextThink( 0.1 );
 	}
 }
@@ -1301,7 +1301,7 @@ void CWeaponBox::Kill( void )
 
 		while ( pWeapon )
 		{
-			pWeapon->SetThink(SUB_Remove);
+			pWeapon->SetThink(&CBasePlayerItem::SUB_Remove);
 			pWeapon->SetNextThink( 0.1 );
 			pWeapon = pWeapon->m_pNext;
 		}

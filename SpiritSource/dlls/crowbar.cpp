@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -147,7 +147,7 @@ void CCrowbar::PrimaryAttack()
 {
 	if (! Swing( 1 ))
 	{
-		SetThink( SwingAgain );
+		SetThink(&CCrowbar:: SwingAgain );
 		SetNextThink( 0.1 );
 	}
 }
@@ -309,7 +309,7 @@ int CCrowbar::Swing( int fFirst )
 #endif
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.25;
 		
-		SetThink( Smack );
+		SetThink(&CCrowbar:: Smack );
 		SetNextThink( 0.2 );
 
 		

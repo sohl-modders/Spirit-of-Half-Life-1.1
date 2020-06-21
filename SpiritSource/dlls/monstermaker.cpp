@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -121,22 +121,22 @@ void CMonsterMaker :: Spawn( )
 	{
 		if ( pev->spawnflags & SF_MONSTERMAKER_CYCLIC )
 		{
-			SetUse ( CyclicUse );// drop one monster each time we fire
+			SetUse(&CMonsterMaker :: CyclicUse );// drop one monster each time we fire
 			m_fActive = FALSE;
 		}
 		else
 		{
-			SetUse ( ToggleUse );// can be turned on/off
+			SetUse(&CMonsterMaker :: ToggleUse );// can be turned on/off
 
 			if ( FBitSet ( pev->spawnflags, SF_MONSTERMAKER_START_ON ) )
 			{// start making monsters as soon as monstermaker spawns
 				m_fActive = TRUE;
-				SetThink ( MakerThink );
+				SetThink(&CMonsterMaker :: MakerThink );
 			}
 			else
 			{// wait to be activated.
 				m_fActive = FALSE;
-				SetThink ( SUB_DoNothing );
+				SetThink(&CMonsterMaker :: SUB_DoNothing );
 			}
 		}
 	}
@@ -144,7 +144,7 @@ void CMonsterMaker :: Spawn( )
 	{// no targetname, just start.
 			SetNextThink( m_flDelay );
 			m_fActive = TRUE;
-			SetThink ( MakerThink );
+			SetThink(&CMonsterMaker :: MakerThink );
 	}
 
 	if ( m_cNumMonsters == 1 || (m_cNumMonsters != -1 && pev->spawnflags & SF_MONSTERMAKER_LEAVECORPSE ))
@@ -208,7 +208,7 @@ void CMonsterMaker::TryMakeMonster( void )
 	if (m_fSpawnDelay)
 	{
 //		ALERT(at_console,"Making Monster in %f seconds\n",m_fSpawnDelay);
-		SetThink( MakeMonster );
+		SetThink(&CMonsterMaker:: MakeMonster );
 		SetNextThink( m_fSpawnDelay );
 	}
 	else
@@ -278,7 +278,7 @@ void CMonsterMaker::MakeMonster( void )
 	else if (m_fActive)
 	{
 		SetNextThink( m_flDelay );
-		SetThink( MakerThink );
+		SetThink(&CMonsterMaker:: MakerThink );
 	}
 }
 
@@ -308,7 +308,7 @@ void CMonsterMaker :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCaller,
 	else
 	{
 		m_fActive = TRUE;
-		SetThink ( MakerThink );
+		SetThink(&CMonsterMaker :: MakerThink );
 	}
 
 	SetNextThink( 0 );

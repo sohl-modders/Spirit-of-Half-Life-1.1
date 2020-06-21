@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -15,6 +15,8 @@
 //
 // teamplay_gamerules.cpp
 //
+#include <ctype.h>
+
 #include	"extdll.h"
 #include	"util.h"
 #include	"cbase.h"
@@ -26,6 +28,7 @@
 #include	"game.h"
 #include	"items.h"
 #include	"voice_gamemgr.h"
+#include	"hltv.h"
 
 extern DLL_GLOBAL CGameRules	*g_pGameRules;
 extern DLL_GLOBAL BOOL	g_fGameOver;
@@ -198,8 +201,8 @@ void CHalfLifeMultiplay :: Think ( void )
 	{
 		// bounds check
 		int time = (int)CVAR_GET_FLOAT( "mp_chattime" );
-		if ( time < 10 )
-			CVAR_SET_STRING( "mp_chattime", "10" );
+		if ( time < 1 )
+			CVAR_SET_STRING( "mp_chattime", "1" );
 		else if ( time > MAX_INTERMISSION_TIME )
 			CVAR_SET_STRING( "mp_chattime", UTIL_dtos1( MAX_INTERMISSION_TIME ) );
 
@@ -419,18 +422,18 @@ void CHalfLifeMultiplay :: InitHUD( CBasePlayer *pl )
 	// team match?
 	if ( g_teamplay )
 	{
-		UTIL_LogPrintf( "\"%s<%i><%u><%s>\" entered the game\n",  
+		UTIL_LogPrintf( "\"%s<%i><%s><%s>\" entered the game\n",  
 			STRING( pl->pev->netname ), 
 			GETPLAYERUSERID( pl->edict() ),
-			GETPLAYERWONID( pl->edict() ),
+			GETPLAYERAUTHID( pl->edict() ),
 			g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pl->edict() ), "model" ) );
 	}
 	else
 	{
-		UTIL_LogPrintf( "\"%s<%i><%u><%i>\" entered the game\n",  
+		UTIL_LogPrintf( "\"%s<%i><%s><%i>\" entered the game\n",  
 			STRING( pl->pev->netname ), 
 			GETPLAYERUSERID( pl->edict() ),
-			GETPLAYERWONID( pl->edict() ),
+			GETPLAYERAUTHID( pl->edict() ),
 			GETPLAYERUSERID( pl->edict() ) );
 	}
 
@@ -488,18 +491,18 @@ void CHalfLifeMultiplay :: ClientDisconnected( edict_t *pClient )
 			// team match?
 			if ( g_teamplay )
 			{
-				UTIL_LogPrintf( "\"%s<%i><%u><%s>\" disconnected\n",  
+				UTIL_LogPrintf( "\"%s<%i><%s><%s>\" disconnected\n",  
 					STRING( pPlayer->pev->netname ), 
 					GETPLAYERUSERID( pPlayer->edict() ),
-					GETPLAYERWONID( pPlayer->edict() ),
+					GETPLAYERAUTHID( pPlayer->edict() ),
 					g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pPlayer->edict() ), "model" ) );
 			}
 			else
 			{
-				UTIL_LogPrintf( "\"%s<%i><%u><%i>\" disconnected\n",  
+				UTIL_LogPrintf( "\"%s<%i><%s><%i>\" disconnected\n",  
 					STRING( pPlayer->pev->netname ), 
 					GETPLAYERUSERID( pPlayer->edict() ),
-					GETPLAYERWONID( pPlayer->edict() ),
+					GETPLAYERAUTHID( pPlayer->edict() ),
 					GETPLAYERUSERID( pPlayer->edict() ) );
 			}
 
@@ -634,7 +637,9 @@ void CHalfLifeMultiplay :: PlayerKilled( CBasePlayer *pVictim, entvars_t *pKille
 	}
 	else
 	{  // killed by the world
-		pKiller->frags -= 1;
+//MH	pKiller->frags -= 1;	this should be victim (we don't want to give the world frags)
+		pVictim->pev->frags -= 1;
+//END
 	}
 
 	// update the scores
@@ -741,19 +746,19 @@ void CHalfLifeMultiplay::DeathNotice( CBasePlayer *pVictim, entvars_t *pKiller, 
 		// team match?
 		if ( g_teamplay )
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%s>\" committed suicide with \"%s\"\n",  
+			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" committed suicide with \"%s\"\n",  
 				STRING( pVictim->pev->netname ), 
 				GETPLAYERUSERID( pVictim->edict() ),
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pVictim->edict() ), "model" ),
 				killer_weapon_name );		
 		}
 		else
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%i>\" committed suicide with \"%s\"\n",  
+			UTIL_LogPrintf( "\"%s<%i><%s><%i>\" committed suicide with \"%s\"\n",  
 				STRING( pVictim->pev->netname ), 
 				GETPLAYERUSERID( pVictim->edict() ),
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				GETPLAYERUSERID( pVictim->edict() ),
 				killer_weapon_name );		
 		}
@@ -763,27 +768,27 @@ void CHalfLifeMultiplay::DeathNotice( CBasePlayer *pVictim, entvars_t *pKiller, 
 		// team match?
 		if ( g_teamplay )
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%s>\" killed \"%s<%i><%u><%s>\" with \"%s\"\n",  
+			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" killed \"%s<%i><%s><%s>\" with \"%s\"\n",  
 				STRING( pKiller->netname ),
 				GETPLAYERUSERID( ENT(pKiller) ),
-				GETPLAYERWONID( ENT(pKiller) ),
+				GETPLAYERAUTHID( ENT(pKiller) ),
 				g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( ENT(pKiller) ), "model" ),
 				STRING( pVictim->pev->netname ),
 				GETPLAYERUSERID( pVictim->edict() ),
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pVictim->edict() ), "model" ),
 				killer_weapon_name );
 		}
 		else
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%i>\" killed \"%s<%i><%u><%i>\" with \"%s\"\n",  
+			UTIL_LogPrintf( "\"%s<%i><%s><%i>\" killed \"%s<%i><%s><%i>\" with \"%s\"\n",  
 				STRING( pKiller->netname ),
 				GETPLAYERUSERID( ENT(pKiller) ),
-				GETPLAYERWONID( ENT(pKiller) ),
+				GETPLAYERAUTHID( ENT(pKiller) ),
 				GETPLAYERUSERID( ENT(pKiller) ),
 				STRING( pVictim->pev->netname ),
 				GETPLAYERUSERID( pVictim->edict() ),
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				GETPLAYERUSERID( pVictim->edict() ),
 				killer_weapon_name );
 		}
@@ -795,26 +800,27 @@ void CHalfLifeMultiplay::DeathNotice( CBasePlayer *pVictim, entvars_t *pKiller, 
 		// team match?
 		if ( g_teamplay )
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%s>\" committed suicide with \"%s\" (world)\n",
+			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" committed suicide with \"%s\" (world)\n",
 				STRING( pVictim->pev->netname ), 
 				GETPLAYERUSERID( pVictim->edict() ), 
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pVictim->edict() ), "model" ),
 				killer_weapon_name );		
 		}
 		else
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%i>\" committed suicide with \"%s\" (world)\n",
+			UTIL_LogPrintf( "\"%s<%i><%s><%i>\" committed suicide with \"%s\" (world)\n",
 				STRING( pVictim->pev->netname ), 
 				GETPLAYERUSERID( pVictim->edict() ), 
-				GETPLAYERWONID( pVictim->edict() ),
+				GETPLAYERAUTHID( pVictim->edict() ),
 				GETPLAYERUSERID( pVictim->edict() ),
 				killer_weapon_name );		
 		}
 	}
 
-	MESSAGE_BEGIN( MSG_SPEC, SVC_HLTV );
-		WRITE_BYTE ( DRC_EVENT );	// player killed
+	MESSAGE_BEGIN( MSG_SPEC, SVC_DIRECTOR );
+		WRITE_BYTE ( 9 );	// command length in bytes
+		WRITE_BYTE ( DRC_CMD_EVENT );	// player killed
 		WRITE_SHORT( ENTINDEX(pVictim->edict()) );	// index number of primary entity
 		if (pevInflictor)
 			WRITE_SHORT( ENTINDEX(ENT(pevInflictor)) );	// index number of secondary entity
@@ -1145,8 +1151,8 @@ void CHalfLifeMultiplay :: GoToIntermission( void )
 
 	// bounds check
 	int time = (int)CVAR_GET_FLOAT( "mp_chattime" );
-	if ( time < 10 )
-		CVAR_SET_STRING( "mp_chattime", "10" );
+	if ( time < 1 )
+		CVAR_SET_STRING( "mp_chattime", "1" );
 	else if ( time > MAX_INTERMISSION_TIME )
 		CVAR_SET_STRING( "mp_chattime", UTIL_dtos1( MAX_INTERMISSION_TIME ) );
 
@@ -1394,7 +1400,7 @@ int ReloadMapCycleFile( char *filename, mapcycle_t *cycle )
 			}
 			else
 			{
-				ALERT( at_debug, "Skipping %s from mapcycle, not a valid map\n", szMap );
+				ALERT( at_console, "Skipping %s from mapcycle, not a valid map\n", szMap );
 			}
 
 		}
@@ -1552,7 +1558,7 @@ void CHalfLifeMultiplay :: ChangeLevel( void )
 
 		if ( !ReloadMapCycleFile( mapcfile, &mapcycle ) || ( !mapcycle.items ) )
 		{
-			ALERT( at_debug, "Unable to load map cycle file %s\n", mapcfile );
+			ALERT( at_console, "Unable to load map cycle file %s\n", mapcfile );
 			do_cycle = FALSE;
 		}
 	}
@@ -1629,14 +1635,14 @@ void CHalfLifeMultiplay :: ChangeLevel( void )
 
 	g_fGameOver = TRUE;
 
-	ALERT( at_debug, "CHANGE LEVEL: %s\n", szNextMap );
+	ALERT( at_console, "CHANGE LEVEL: %s\n", szNextMap );
 	if ( minplayers || maxplayers )
 	{
-		ALERT( at_debug, "PLAYER COUNT:  min %i max %i current %i\n", minplayers, maxplayers, curplayers );
+		ALERT( at_console, "PLAYER COUNT:  min %i max %i current %i\n", minplayers, maxplayers, curplayers );
 	}
 	if ( strlen( szRules ) > 0 )
 	{
-		ALERT( at_debug, "RULES:  %s\n", szRules );
+		ALERT( at_console, "RULES:  %s\n", szRules );
 	}
 	
 	CHANGE_LEVEL( szNextMap, NULL );

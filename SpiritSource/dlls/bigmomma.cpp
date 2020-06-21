@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -748,7 +748,10 @@ void CBigMomma::NodeStart( int iszNextNode )
 
 	if ( pev->netname )
 	{
-		pTarget = UTIL_FindEntityByTargetname( NULL, STRING(pev->netname) );
+		edict_t *pentTarget = FIND_ENTITY_BY_TARGETNAME ( NULL, STRING(pev->netname) );
+
+		if ( !FNullEnt(pentTarget) )
+			pTarget = Instance( pentTarget );
 	}
 
 
@@ -1147,6 +1150,7 @@ void CBigMomma::RunTask( Task_t *pTask )
 }
 
 
+
 Vector VecCheckSplatToss( entvars_t *pev, const Vector &vecSpot1, Vector vecSpot2, float maxHeight )
 {
 	TraceResult		tr;
@@ -1263,7 +1267,7 @@ CBMortar *CBMortar::Shoot( edict_t *pOwner, Vector vecStart, Vector vecVelocity 
 	pSpit->pev->velocity = vecVelocity;
 	pSpit->pev->owner = pOwner;
 	pSpit->pev->scale = 2.5;
-	pSpit->SetThink ( Animate );
+	pSpit->SetThink(&CBMortar:: Animate );
 	pSpit->SetNextThink( 0.1 );
 
 	return pSpit;

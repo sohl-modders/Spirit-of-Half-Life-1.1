@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -12,6 +12,8 @@
 *   without written permission from Valve LLC.
 *
 ****/
+// Robin, 4-22-98: Moved set_suicide_frame() here from player.cpp to allow us to 
+//				   have one without a hardcoded player.mdl in tf_client.cpp
 
 /*
 
@@ -20,6 +22,8 @@
   client/server game specific stuff
 
 */
+
+#include <ctype.h>
 
 #include "extdll.h"
 #include "util.h"
@@ -51,6 +55,23 @@ extern int gmsgHUDColor;
 extern int g_teamplay;
 
 void LinkUserMessages( void );
+
+/*
+ * used by kill command and disconnect command
+ * ROBIN: Moved here from player.cpp, to allow multiple player models
+ */
+void set_suicide_frame(entvars_t* pev)
+{       
+	if (!FStrEq(STRING(pev->model), "models/player.mdl"))
+		return; // allready gibbed
+
+//	pev->frame		= $deatha11;
+	pev->solid		= SOLID_NOT;
+	pev->movetype	= MOVETYPE_TOSS;
+	pev->deadflag	= DEAD_DEAD;
+	pev->nextthink	= -1;
+}
+
 
 /*
 ===========
@@ -182,6 +203,9 @@ void ClientPutInServer( edict_t *pEntity )
 	pPlayer->pev->effects |= EF_NOINTERP;
 }
 
+#include "voice_gamemgr.h"
+extern CVoiceGameMgr g_VoiceGameMgr;
+
 //// HOST_SAY
 // String comes in as
 // say blah blah blah
@@ -202,6 +226,13 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	// We can get a raw string now, without the "say " prepended
 	if ( CMD_ARGC() == 0 )
 		return;
+
+	entvars_t *pev = &pEntity->v;
+	CBasePlayer* player = GetClassPtr((CBasePlayer *)pev);
+
+	//Not yet.
+	if ( player->m_flNextChatTime > gpGlobals->time )
+		 return;
 
 	if ( !stricmp( pcmd, cpSay) || !stricmp( pcmd, cpSayTeam ) )
 	{
@@ -237,7 +268,8 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	}
 
 // make sure the text has content
-	for ( char *pc = p; pc != NULL && *pc != 0; pc++ )
+	char *pc;
+	for ( pc = p; pc != NULL && *pc != 0; pc++ )
 	{
 		if ( isprint( *pc ) && !isspace( *pc ) )
 		{
@@ -261,6 +293,9 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	strcat( text, p );
 	strcat( text, "\n" );
 
+
+	player->m_flNextChatTime = gpGlobals->time + CHAT_INTERVAL;
+
 	// loop through all players
 	// Start with the first player.
 	// This may return the world in single player if the client types something between levels or during spawn
@@ -276,6 +311,10 @@ void Host_Say( edict_t *pEntity, int teamonly )
 			continue;
 
 		if ( !(client->IsNetClient()) )	// Not a client ? (should never be true)
+			continue;
+
+		// can the receiver hear the sender? or has he muted him?
+		if ( g_VoiceGameMgr.PlayerHasBlockedPlayer( client, player ) )
 			continue;
 
 		if ( teamonly && g_pGameRules->PlayerRelationship(client, CBaseEntity::Instance(pEntity)) != GR_TEAMMATE )
@@ -306,20 +345,20 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	// team match?
 	if ( g_teamplay )
 	{
-		UTIL_LogPrintf( "\"%s<%i><%u><%s>\" %s \"%s\"\n", 
+		UTIL_LogPrintf( "\"%s<%i><%s><%s>\" %s \"%s\"\n", 
 			STRING( pEntity->v.netname ), 
 			GETPLAYERUSERID( pEntity ),
-			GETPLAYERWONID( pEntity ),
+			GETPLAYERAUTHID( pEntity ),
 			g_engfuncs.pfnInfoKeyValue( g_engfuncs.pfnGetInfoKeyBuffer( pEntity ), "model" ),
 			temp,
 			p );
 	}
 	else
 	{
-		UTIL_LogPrintf( "\"%s<%i><%u><%i>\" %s \"%s\"\n", 
+		UTIL_LogPrintf( "\"%s<%i><%s><%i>\" %s \"%s\"\n", 
 			STRING( pEntity->v.netname ), 
 			GETPLAYERUSERID( pEntity ),
-			GETPLAYERWONID( pEntity ),
+			GETPLAYERAUTHID( pEntity ),
 			GETPLAYERUSERID( pEntity ),
 			temp,
 			p );
@@ -406,6 +445,10 @@ void ClientCommand( edict_t *pEntity )
 	{
 		Host_Say( pEntity, 1 );
 	}
+	else if ( FStrEq(pcmd, "fullupdate" ) )
+	{
+		GetClassPtr((CBasePlayer *)pev)->ForceClientDllUpdate(); 
+	}
 	else if ( FStrEq(pcmd, "give" ) )
 	{
 		if ( g_flWeaponCheat != 0.0)
@@ -442,6 +485,13 @@ void ClientCommand( edict_t *pEntity )
 	else if (FStrEq(pcmd, "lastinv" ))
 	{
 		GetClassPtr((CBasePlayer *)pev)->SelectLastItem();
+	}
+	else if ( FStrEq( pcmd, "spectate" ) && (pev->flags & FL_PROXY) )	// added for proxy support
+	{
+		CBasePlayer * pPlayer = GetClassPtr((CBasePlayer *)pev);
+
+		edict_t *pentSpawnSpot = g_pGameRules->GetPlayerSpawnSpot( pPlayer );
+		pPlayer->StartObserver( pev->origin, VARS(pentSpawnSpot)->angles);
 	}
 	else if ( g_pGameRules->ClientCommand( GetClassPtr((CBasePlayer *)pev), pcmd ) )
 	{
@@ -507,19 +557,19 @@ void ClientUserInfoChanged( edict_t *pEntity, char *infobuffer )
 		// team match?
 		if ( g_teamplay )
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%s>\" changed name to \"%s\"\n", 
+			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" changed name to \"%s\"\n", 
 				STRING( pEntity->v.netname ), 
 				GETPLAYERUSERID( pEntity ), 
-				GETPLAYERWONID( pEntity ),
+				GETPLAYERAUTHID( pEntity ),
 				g_engfuncs.pfnInfoKeyValue( infobuffer, "model" ), 
 				g_engfuncs.pfnInfoKeyValue( infobuffer, "name" ) );
 		}
 		else
 		{
-			UTIL_LogPrintf( "\"%s<%i><%u><%i>\" changed name to \"%s\"\n", 
+			UTIL_LogPrintf( "\"%s<%i><%s><%i>\" changed name to \"%s\"\n", 
 				STRING( pEntity->v.netname ), 
 				GETPLAYERUSERID( pEntity ), 
-				GETPLAYERWONID( pEntity ),
+				GETPLAYERAUTHID( pEntity ),
 				GETPLAYERUSERID( pEntity ), 
 				g_engfuncs.pfnInfoKeyValue( infobuffer, "name" ) );
 		}
@@ -582,6 +632,9 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 	LinkUserMessages();
 }
 
+// a cached version of gpGlobals->frametime. The engine sets frametime to 0 if the player is frozen... so we just cache it in prethink,
+// allowing it to be restored later and used by CheckDesiredList.
+float cached_frametime = 0.0f;
 
 /*
 ================
@@ -597,6 +650,8 @@ void PlayerPreThink( edict_t *pEntity )
 
 	if (pPlayer)
 		pPlayer->PreThink( );
+
+	cached_frametime = gpGlobals->frametime;
 }
 
 /*
@@ -613,6 +668,9 @@ void PlayerPostThink( edict_t *pEntity )
 
 	if (pPlayer)
 		pPlayer->PostThink( );
+
+	// use the old frametime, even if the engine has reset it
+	gpGlobals->frametime = cached_frametime;
 
 	//LRC - moved to here from CBasePlayer::PostThink, so that
 	// things don't stop when the player dies
@@ -634,6 +692,7 @@ void ParmsChangeLevel( void )
 	if ( pSaveData )
 		pSaveData->connectionCount = BuildChangeList( pSaveData->levelList, MAX_LEVEL_CONNECTIONS );
 }
+
 
 //
 // GLOBALS ASSUMED SET:  g_ulFrameCount

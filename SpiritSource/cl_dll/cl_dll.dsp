@@ -55,11 +55,12 @@ LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /machine:I386
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib winmm.lib ../utils/vgui/lib/win32_vc6/vgui.lib wsock32.lib /nologo /subsystem:windows /dll /map /machine:I386 /out:".\Release\client.dll"
 # Begin Custom Build
+TargetDir=.\Release
 InputPath=.\Release\client.dll
 SOURCE="$(InputPath)"
 
-"c:\games\Half-Life\spiritdev\cl_dlls\client.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy .\Release\client.dll c:\games\Half-Life\spiritdev\cl_dlls\client.dll
+"C:\games\half-life\spiritdev\cl_dlls\client.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy $(TargetDir)\client.dll "C:\games\half-life\spiritdev\cl_dlls\client.dll"
 
 # End Custom Build
 
@@ -88,6 +89,15 @@ BSC32=bscmake.exe
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386
 # ADD LINK32 oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib winmm.lib ../utils/vgui/lib/win32_vc6/vgui.lib wsock32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /out:".\Debug\client.dll"
+# Begin Custom Build
+TargetDir=.\Debug
+InputPath=.\Debug\client.dll
+SOURCE="$(InputPath)"
+
+"C:\sierra\Half-Life\spiritdev\cl_dlls\client.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy $(TargetDir)\client.dll "C:\sierra\Half-Life\spiritdev\cl_dlls\client.dll"
+
+# End Custom Build
 
 !ENDIF 
 
@@ -317,10 +327,6 @@ SOURCE=.\parsemsg.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\parsemsg.h
-# End Source File
-# Begin Source File
-
 SOURCE=..\pm_shared\pm_debug.c
 # End Source File
 # Begin Source File
@@ -425,6 +431,10 @@ SOURCE=.\vgui_ServerBrowser.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\vgui_SpectatorPanel.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\vgui_TeamFortressViewport.cpp
 # End Source File
 # Begin Source File
@@ -517,6 +527,10 @@ SOURCE=.\overview.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\parsemsg.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\pm_shared\pm_debug.h
 # End Source File
 # Begin Source File
@@ -578,6 +592,10 @@ SOURCE=.\vgui_ScorePanel.h
 # Begin Source File
 
 SOURCE=.\vgui_ServerBrowser.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\vgui_SpectatorPanel.h
 # End Source File
 # Begin Source File
 

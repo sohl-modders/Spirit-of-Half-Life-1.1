@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -28,6 +28,7 @@
 #pragma warning(disable : 4244)
 
 vec3_t vec3_origin = {0,0,0};
+
 int nanmask = 255<<23;
 
 float	anglemod(float a)
@@ -221,7 +222,8 @@ void InterpolateAngles( float *start, float *end, float *output, float frac )
 	}
 
 	NormalizeAngles( output );
-} 
+}
+ 
 
 /*
 ===================
@@ -229,7 +231,7 @@ AngleBetweenVectors
 
 ===================
 */
-float AngleBetweenVectors( vec3_t v1, vec3_t v2 )
+float AngleBetweenVectors( const vec3_t v1, const vec3_t v2 )
 {
 	float angle;
 	float l1 = Length( v1 );
@@ -243,6 +245,7 @@ float AngleBetweenVectors( vec3_t v1, vec3_t v2 )
 
 	return angle;
 }
+
 
 void VectorTransform (const vec3_t in1, float in2[3][4], vec3_t out)
 {
@@ -309,14 +312,20 @@ double sqrt(double x);
 float Length(const vec3_t v)
 {
 	int		i;
-	float	length;
-	
-	length = 0;
+	float	length = 0.0f;
+		
 	for (i=0 ; i< 3 ; i++)
 		length += v[i]*v[i];
 	length = sqrt (length);		// FIXME
 
 	return length;
+}
+
+float Distance(const vec3_t v1, const vec3_t v2)
+{
+	vec3_t d;
+	VectorSubtract(v2,v1,d);
+	return Length(d);
 }
 
 float VectorNormalize (vec3_t v)

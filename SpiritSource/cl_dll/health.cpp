@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -143,6 +143,17 @@ int CHudHealth:: MsgFunc_Damage(const char *pszName,  int iSize, void *pbuf )
 // Green <-> Yellow <-> Red ramp
 void CHudHealth::GetPainColor( int &r, int &g, int &b )
 {
+	int iHealth = m_iHealth;
+
+	if (iHealth > 25)
+		iHealth -= 25;
+	else if ( iHealth < 0 )
+		iHealth = 0;
+#if 0
+	g = iHealth * 255 / 100;
+	r = 255 - g;
+	b = 0;
+#else
 	if (m_iHealth > 25)
 	{
 		UnpackRGB(r,g,b, gHUD.m_iHUDColor);
@@ -153,6 +164,7 @@ void CHudHealth::GetPainColor( int &r, int &g, int &b )
 		g = 0;
 		b = 0;
 	}
+#endif 
 }
 
 int CHudHealth::Draw(float flTime)

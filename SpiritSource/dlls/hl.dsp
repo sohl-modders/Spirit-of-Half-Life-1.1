@@ -57,11 +57,12 @@ LINK32=link.exe
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib /nologo /subsystem:windows /dll /map /debug /machine:I386 /def:".\hl.def" /out:".\Releasehl/spirit.dll"
 # SUBTRACT LINK32 /profile
 # Begin Custom Build
+TargetDir=.\Releasehl
 InputPath=.\Releasehl\spirit.dll
 SOURCE="$(InputPath)"
 
-"c:\games\half-life\spiritdev\dlls\spirit.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy .\Releasehl\spirit.dll c:\games\half-life\spiritdev\dlls\spirit.dll
+"C:\games\half-life\spiritdev\dlls\spirit.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy $(TargetDir)\spirit.dll "C:\games\half-life\spiritdev\dlls\spirit.dll"
 
 # End Custom Build
 
@@ -89,8 +90,17 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /dll /debug /machine:I386
-# ADD LINK32 user32.lib advapi32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /def:".\hl.def" /implib:".\Debug\hl.lib"
+# ADD LINK32 user32.lib advapi32.lib /nologo /subsystem:windows /dll /debug /machine:I386 /def:".\hl.def" /out:".\debughl/spirit.dll" /implib:".\Debug\hl.lib"
 # SUBTRACT LINK32 /profile
+# Begin Custom Build
+TargetDir=.\debughl
+InputPath=.\debughl\spirit.dll
+SOURCE="$(InputPath)"
+
+"C:\sierra\half-life\spiritdev\dlls\spirit.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy $(TargetDir)\spirit.dll "C:\sierra\half-life\spiritdev\dlls\spirit.dll"
+
+# End Custom Build
 
 !ELSEIF  "$(CFG)" == "hl - Win32 Profile"
 
@@ -120,11 +130,12 @@ LINK32=link.exe
 # SUBTRACT BASE LINK32 /profile
 # ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib /nologo /subsystem:windows /dll /profile /debug /machine:I386 /def:".\hl.def" /out:".\Profilehl/spirit.dll"
 # Begin Custom Build
+TargetDir=.\Profilehl
 InputPath=.\Profilehl\spirit.dll
 SOURCE="$(InputPath)"
 
-"c:\games\half-life\spiritdev\dlls\spirit.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	copy .\Profilehl\spirit.dll c:\games\half-life\spiritdev\dlls
+"C:\sierra\half-life\spiritdev\dlls\spirit.dll" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	copy $(TargetDir)\spirit.dll "C:\sierra\half-life\spiritdev\dlls\spirit.dll"
 
 # End Custom Build
 

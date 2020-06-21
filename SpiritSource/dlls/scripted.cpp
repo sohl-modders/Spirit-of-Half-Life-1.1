@@ -191,12 +191,12 @@ void CCineMonster :: Spawn( void )
 
 	if ( FStringNull(m_iszIdle) && FStringNull(pev->targetname) ) // if no targetname, start now
 	{
-		SetThink( CineThink );
+		SetThink(&CCineMonster :: CineThink );
 		SetNextThink( 1.0 );
 	}
 	else if ( m_iszIdle )
 	{
-		SetThink( InitIdleThink );
+		SetThink(&CCineMonster :: InitIdleThink );
 		SetNextThink( 1.0 );
 	}
 	if ( pev->spawnflags & SF_SCRIPT_NOINTERRUPT )
@@ -237,7 +237,7 @@ void CCineMonster :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 //		ALERT(at_console, "Sequence \"%s\" triggered, can't find target; searching\n", STRING(pev->targetname));
 		m_hActivator = pActivator;
 		// if not, try finding them
-		SetThink( CineThink );
+		SetThink(&CCineMonster :: CineThink );
 //		SetNextThink( 0 );
 		CineThink(); //LRC
 	}
@@ -293,7 +293,7 @@ void CCineMonster :: Touch( CBaseEntity *pOther )
 //
 void CCineMonster :: Die( void )
 {
-	SetThink( SUB_Remove );
+	SetThink(&CCineMonster :: SUB_Remove );
 }
 
 //
@@ -535,7 +535,7 @@ void CCineMonster :: SequenceDone ( CBaseMonster *pMonster )
 
 	if ( !( pev->spawnflags & SF_SCRIPT_REPEATABLE ) )
 	{
-		SetThink( SUB_Remove );
+		SetThink(&CCineMonster :: SUB_Remove );
 		SetNextThink( 0.1 );
 	}
 	
@@ -1008,7 +1008,7 @@ void CScriptedSentence :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, US
 		return;
 //	ALERT( at_console, "Firing sentence: %s\n", STRING(m_iszSentence) );
 	m_hActivator = pActivator;
-	SetThink( FindThink );
+	SetThink(&CScriptedSentence :: FindThink );
 	SetNextThink( 0 );
 }
 
@@ -1022,7 +1022,7 @@ void CScriptedSentence :: Spawn( void )
 	// if no targetname, start now
 	if ( !pev->targetname )
 	{
-		SetThink( FindThink );
+		SetThink(&CScriptedSentence :: FindThink );
 		SetNextThink( 1.0 );
 	}
 
@@ -1067,7 +1067,7 @@ void CScriptedSentence :: FindThink( void )
 				pPlayer->SetSuitUpdate((char*)STRING(m_iszSentence),TRUE,0);
 			if ( pev->spawnflags & SF_SENTENCE_ONCE )
 				UTIL_Remove( this );
-			SetThink( DurationThink );
+			SetThink(&CScriptedSentence :: DurationThink );
 			SetNextThink( m_flDuration );
 			m_active = FALSE;
 		}
@@ -1083,7 +1083,7 @@ void CScriptedSentence :: FindThink( void )
 		StartSentence( pMonster );
 		if ( pev->spawnflags & SF_SENTENCE_ONCE )
 			UTIL_Remove( this );
-		SetThink( DurationThink );
+		SetThink(&CScriptedSentence :: DurationThink );
 		SetNextThink( m_flDuration );
 		m_active = FALSE;
 //		ALERT( at_console, "%s: found monster %s\n", STRING(m_iszSentence), STRING(m_iszEntity) );
@@ -1100,7 +1100,7 @@ void CScriptedSentence :: DurationThink( void )
 {
 	m_playing = FALSE;
 	SetNextThink( m_flRepeat );
-	SetThink( DelayThink );
+	SetThink(&CScriptedSentence :: DelayThink );
 }
 
 void CScriptedSentence :: DelayThink( void )
@@ -1108,7 +1108,7 @@ void CScriptedSentence :: DelayThink( void )
 	m_active = TRUE;
 	if ( !pev->targetname )
 		SetNextThink( 0.1 );
-	SetThink( FindThink );
+	SetThink(&CScriptedSentence :: FindThink );
 }
 
 
@@ -1231,7 +1231,7 @@ LINK_ENTITY_TO_CLASS( monster_furniture, CFurniture );
 //=========================================================
 void CFurniture :: Die ( void )
 {
-	SetThink ( SUB_Remove );
+	SetThink(&CFurniture :: SUB_Remove );
 	SetNextThink( 0 );
 }
 

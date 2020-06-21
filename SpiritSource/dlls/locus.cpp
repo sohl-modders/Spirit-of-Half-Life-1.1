@@ -309,7 +309,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 			SF_BEAM_SPARKSTART | SF_BEAM_SPARKEND | SF_BEAM_DECALS);
 	if (m_fDuration)
 	{
-		pBeam->SetThink( SUB_Remove );
+		pBeam->SetThink(&CBeam:: SUB_Remove );
 		pBeam->SetNextThink( m_fDuration );
 	}
 	pBeam->pev->targetname = m_iszTargetName;
@@ -698,7 +698,7 @@ TYPEDESCRIPTION	CLocusVariable::m_SaveData[] =
 	DEFINE_FIELD( CLocusVariable, m_fDuration, FIELD_FLOAT),
 };
 
-IMPLEMENT_SAVERESTORE( CLocusVariable, CLocusVariable );
+IMPLEMENT_SAVERESTORE( CLocusVariable, CPointEntity );
 LINK_ENTITY_TO_CLASS( locus_variable, CLocusVariable );
 
 void CLocusVariable :: KeyValue( KeyValueData *pkvd )

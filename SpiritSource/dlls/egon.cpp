@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -164,7 +164,7 @@ void CEgon::UseAmmo( int count )
 void CEgon::Attack( void )
 {
 	// don't fire underwater
-	if ( m_pPlayer->pev->waterlevel == 3 && m_pPlayer->pev->watertype > CONTENT_FLYFIELD )
+	if ( m_pPlayer->pev->waterlevel == 3 )
 	{
 		
 		if ( m_fireState != FIRE_OFF || m_pBeam )
@@ -402,6 +402,7 @@ void CEgon::UpdateEffect( const Vector &startPoint, const Vector &endPoint, floa
 		m_pBeam->SetColor( 60 + (25*timeBlend), 120 + (30*timeBlend), 64 + 80*fabs(sin(gpGlobals->time*10)) );
 
 
+//	UTIL_SetOrigin( m_pSprite->pev, endPoint );
 	UTIL_SetOrigin( m_pSprite, endPoint );
 	m_pSprite->pev->frame += 8 * gpGlobals->frametime;
 	if ( m_pSprite->pev->frame > m_pSprite->Frames() )

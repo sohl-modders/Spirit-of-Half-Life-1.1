@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -30,6 +30,8 @@
 #include "demo.h"
 #include "demo_api.h"
 #include "vgui_scorepanel.h"
+
+
 
 class CHLVoiceStatusHelper : public IVoiceStatusHelper
 {
@@ -89,10 +91,39 @@ int __MsgFunc_Logo(const char *pszName, int iSize, void *pbuf)
 	return gHUD.MsgFunc_Logo(pszName, iSize, pbuf );
 }
 
+//DECLARE_MESSAGE(m_Logo, Logo)
 //LRC
 int __MsgFunc_HUDColor(const char *pszName, int iSize, void *pbuf)
 {
 	return gHUD.MsgFunc_HUDColor(pszName, iSize, pbuf );
+}
+
+//LRC
+int __MsgFunc_SetFog(const char *pszName, int iSize, void *pbuf)
+{
+	gHUD.MsgFunc_SetFog( pszName, iSize, pbuf );
+	return 1;
+}
+
+//LRC
+int __MsgFunc_KeyedDLight(const char *pszName, int iSize, void *pbuf)
+{
+	gHUD.MsgFunc_KeyedDLight( pszName, iSize, pbuf );
+	return 1;
+}
+
+//LRC
+int __MsgFunc_AddShine(const char *pszName, int iSize, void *pbuf)
+{
+	gHUD.MsgFunc_AddShine( pszName, iSize, pbuf );
+	return 1;
+}
+
+//LRC
+int __MsgFunc_SetSky(const char *pszName, int iSize, void *pbuf)
+{
+	gHUD.MsgFunc_SetSky( pszName, iSize, pbuf );
+	return 1;
 }
 
 int __MsgFunc_ResetHUD(const char *pszName, int iSize, void *pbuf)
@@ -106,10 +137,9 @@ int __MsgFunc_InitHUD(const char *pszName, int iSize, void *pbuf)
 	return 1;
 }
 
-//LRC
-int __MsgFunc_SetFog(const char *pszName, int iSize, void *pbuf)
+int __MsgFunc_ViewMode(const char *pszName, int iSize, void *pbuf)
 {
-	gHUD.MsgFunc_SetFog( pszName, iSize, pbuf );
+	gHUD.MsgFunc_ViewMode( pszName, iSize, pbuf );
 	return 1;
 }
 
@@ -133,7 +163,7 @@ void __CmdFunc_OpenCommandMenu(void)
 {
 	if ( gViewPort )
 	{
-		gViewPort->ShowCommandMenu();
+		gViewPort->ShowCommandMenu( gViewPort->m_StandardMenu );
 	}
 }
 
@@ -273,13 +303,17 @@ int __MsgFunc_AllowSpec(const char *pszName, int iSize, void *pbuf)
 void CHud :: Init( void )
 {
 	HOOK_MESSAGE( Logo );
-	HOOK_MESSAGE( HUDColor ); //LRC
 	HOOK_MESSAGE( ResetHUD );
 	HOOK_MESSAGE( GameMode );
 	HOOK_MESSAGE( InitHUD );
-	HOOK_MESSAGE( SetFog ); //LRC
+	HOOK_MESSAGE( ViewMode );
 	HOOK_MESSAGE( SetFOV );
 	HOOK_MESSAGE( Concuss );
+	HOOK_MESSAGE( HUDColor ); //LRC
+	HOOK_MESSAGE( SetFog ); //LRC
+	HOOK_MESSAGE( KeyedDLight ); //LRC
+	HOOK_MESSAGE( AddShine ); //LRC
+	HOOK_MESSAGE( SetSky ); //LRC
 
 	// TFFree CommandMenu
 	HOOK_COMMAND( "+commandmenu", OpenCommandMenu );
@@ -317,10 +351,11 @@ void CHud :: Init( void )
 	CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", 0 );
 	default_fov = CVAR_CREATE( "default_fov", "90", 0 );
 	m_pCvarStealMouse = CVAR_CREATE( "hud_capturemouse", "1", FCVAR_ARCHIVE );
-
+	m_pCvarDraw = CVAR_CREATE( "hud_draw", "1", FCVAR_ARCHIVE );
 	cl_lw = gEngfuncs.pfnGetCvarPointer( "cl_lw" );
 
 	m_pSpriteList = NULL;
+	m_pShinySurface = NULL; //LRC
 
 	// Clear any old HUD list
 	if ( m_pHudList )
@@ -340,6 +375,8 @@ void CHud :: Init( void )
 
 	m_Ammo.Init();
 	m_Health.Init();
+	m_SayText.Init();
+	m_Spectator.Init();
 	m_Geiger.Init();
 	m_Train.Init();
 	m_Battery.Init();
@@ -351,9 +388,7 @@ void CHud :: Init( void )
 	m_TextMessage.Init();
 	m_StatusIcons.Init();
 	GetClientVoiceMgr()->Init(&g_VoiceStatusHelper, (vgui::Panel**)&gViewPort);
-	m_Spectator.Init();
 
-	m_SayText.Init();
 	m_Menu.Init();
 	
 	ServersInit();
@@ -487,6 +522,7 @@ void CHud :: VidInit( void )
 
 	m_Ammo.VidInit();
 	m_Health.VidInit();
+	m_Spectator.VidInit();
 	m_Geiger.VidInit();
 	m_Train.VidInit();
 	m_Battery.VidInit();
@@ -500,7 +536,6 @@ void CHud :: VidInit( void )
 	m_TextMessage.VidInit();
 	m_StatusIcons.VidInit();
 	GetClientVoiceMgr()->VidInit();
-	m_Spectator.VidInit();
 }
 
 int CHud::MsgFunc_Logo(const char *pszName,  int iSize, void *pbuf)

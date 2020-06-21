@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -432,7 +432,7 @@ void CSquadMonster :: StartMonster( void )
 
 		if ( iSquadSize )
 		{
-			ALERT ( at_aiconsole, "Squad of %d %s formed\n", iSquadSize, STRING( pev->classname ) );
+		  ALERT ( at_aiconsole, "Squad of %d %s formed\n", iSquadSize, STRING( pev->classname ) );
 		}
 
 		if ( IsLeader() && FClassnameIs ( pev, "monster_human_grunt" ) )
@@ -516,7 +516,7 @@ BOOL CSquadMonster :: NoFriendlyFire( BOOL playerAlly )
 			}
 		}
 	}
-	
+
 	if (playerAlly)
 	{
 		edict_t		*pentPlayer = FIND_CLIENT_IN_PVS( edict() );

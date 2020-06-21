@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -117,7 +117,7 @@ public:
 	void EXPORT NearestPath( void );
 	void EXPORT DeadEnd( void );
 
-	void NextThink( float thinkTime, BOOL alwaysThink );
+	void		NextThink( float thinkTime, BOOL alwaysThink );
 
 	void SetTrack( CPathTrack *track ) { m_ppath = track->Nearest(pev->origin); }
 	void SetControls( entvars_t *pevControls );

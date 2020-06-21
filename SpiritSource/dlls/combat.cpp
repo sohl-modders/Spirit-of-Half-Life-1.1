@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -116,7 +116,7 @@ void CGib :: SpawnStickyGibs( entvars_t *pevVictim, Vector vecOrigin, int cGibs 
 			pGib->pev->movetype = MOVETYPE_TOSS;
 			pGib->pev->solid = SOLID_BBOX;
 			UTIL_SetSize ( pGib->pev, Vector ( 0, 0 ,0 ), Vector ( 0, 0, 0 ) );
-			pGib->SetTouch ( StickyGibTouch );
+			pGib->SetTouch(&CGib:: StickyGibTouch );
 			pGib->SetThink (NULL);
 		}
 		pGib->LimitVelocity();
@@ -265,6 +265,7 @@ void CGib :: SpawnRandomGibs( entvars_t *pevVictim, int cGibs, int notfirst, con
 }
 
 //LRC - work out gibs from blood colour, instead of from class.
+
 BOOL CBaseMonster :: HasHumanGibs( void )
 {
 	int myClass = Classify();
@@ -378,7 +379,7 @@ void CBaseMonster :: GibMonster( void )
 		if ( gibbed )
 		{
 			// don't remove players!
-			SetThink ( SUB_Remove );
+			SetThink(&CBaseMonster :: SUB_Remove );
 			SetNextThink( 0 );
 		}
 		else
@@ -701,7 +702,7 @@ void CBaseEntity :: SUB_StartFadeOut ( void )
 	pev->avelocity = g_vecZero;
 
 	SetNextThink( 0.1 );
-	SetThink ( SUB_FadeOut );
+	SetThink(&CBaseEntity :: SUB_FadeOut );
 }
 
 void CBaseEntity :: SUB_FadeOut ( void  )
@@ -715,7 +716,7 @@ void CBaseEntity :: SUB_FadeOut ( void  )
 	{
 		pev->renderamt = 0;
 		SetNextThink( 0.2 );
-		SetThink ( SUB_Remove );
+		SetThink(&CBaseEntity :: SUB_Remove );
 	}
 }
 
@@ -735,7 +736,7 @@ void CGib :: WaitTillLand ( void )
 
 	if ( pev->velocity == g_vecZero )
 	{
-		SetThink (SUB_StartFadeOut);
+		SetThink(&CGib ::SUB_StartFadeOut);
 		SetNextThink( m_lifeTime );
 
 		// If you bleed, you stink!
@@ -803,7 +804,7 @@ void CGib :: StickyGibTouch ( CBaseEntity *pOther )
 	Vector	vecSpot;
 	TraceResult	tr;
 	
-	SetThink ( SUB_Remove );
+	SetThink(&CGib :: SUB_Remove );
 	SetNextThink( 10 );
 
 	if ( !FClassnameIs( pOther->pev, "worldspawn" ) )
@@ -845,8 +846,8 @@ void CGib :: Spawn( const char *szGibModel )
 
 	SetNextThink( 4 );
 	m_lifeTime = 25;
-	SetThink ( WaitTillLand );
-	SetTouch ( BounceGibTouch );
+	SetThink(&CGib :: WaitTillLand );
+	SetTouch(&CGib :: BounceGibTouch );
 
 	m_material = matNone;
 	m_cBloodDecals = 5;// how many blood decals this gib can place (1 per bounce until none remain). 
@@ -946,6 +947,7 @@ int CBaseMonster :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker,
 	// do the damage
 	pev->health -= flTake;
 
+	
 	// HACKHACK Don't kill monsters in a script.  Let them break their scripts first
 	if ( m_MonsterState == MONSTERSTATE_SCRIPT )
 	{
@@ -1292,7 +1294,7 @@ BOOL CBaseEntity :: FVisible ( CBaseEntity *pEntity )
 	TraceResult tr;
 	Vector		vecLookerOrigin;
 	Vector		vecTargetOrigin;
-
+	
 	if (FBitSet( pEntity->pev->flags, FL_NOTARGET ))
 		return FALSE;
 
@@ -1544,7 +1546,7 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 					DecalGunshot( &tr, iBulletType );
 				}
 				break;
-
+			
 			case BULLET_PLAYER_357:
 				pEntity->TraceAttack(pevAttacker, gSkillData.plrDmg357, vecDir, &tr, DMG_BULLET);
 				if ( !tracer )
@@ -1643,7 +1645,7 @@ Vector CBaseEntity::FireBulletsPlayer ( ULONG cShots, Vector vecSrc, Vector vecD
 			case BULLET_PLAYER_357:		
 				pEntity->TraceAttack(pevAttacker, gSkillData.plrDmg357, vecDir, &tr, DMG_BULLET); 
 				break;
-			
+				
 			case BULLET_NONE: // FIX 
 				pEntity->TraceAttack(pevAttacker, 50, vecDir, &tr, DMG_CLUB);
 				TEXTURETYPE_PlaySound(&tr, vecSrc, vecEnd, iBulletType);

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -595,9 +595,9 @@
 #define	CONTENTS_LADDER		-16
 
 //LRC- New (long overdue) content types for Spirit
-#define	CONTENT_FLYFIELD	-17
+#define	CONTENT_FLYFIELD			-17
 #define	CONTENT_GRAVITY_FLYFIELD	-18
-#define	CONTENT_FOG			-19
+#define	CONTENT_FOG					-19
 
 #define CONTENT_EMPTY	-1
 #define CONTENT_SOLID	-2

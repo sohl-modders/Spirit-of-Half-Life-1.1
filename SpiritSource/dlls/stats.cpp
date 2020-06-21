@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2001, Valve LLC, All rights reserved. ============
+//========= Copyright Â© 1996-2002, Valve LLC, All rights reserved. ============
 //
 // Purpose: New version of the slider bar
 //
@@ -15,7 +15,8 @@
 #include "weapons.h"
 #include "soundent.h"
 #include "monsters.h"
-#include "..\engine\shake.h"
+//#include "..\engine\shake.h"
+#include "shake.h"
 #include "decals.h"
 #include "gamerules.h"
 

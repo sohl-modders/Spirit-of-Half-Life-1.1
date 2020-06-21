@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -86,7 +86,7 @@ public:
 
 	inline void AnimateAndDie( float framerate ) 
 	{ 
-		SetThink(AnimateUntilDead); 
+		SetThink(&CSprite ::AnimateUntilDead); 
 		pev->framerate = framerate;
 		pev->dmgtime = gpGlobals->time + (m_maxFrame / framerate); 
 		SetNextThink( 0 );
@@ -98,6 +98,8 @@ public:
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
 	static CSprite *SpriteCreate( const char *pSpriteName, const Vector &origin, BOOL animate );
+
+//private:
 
 	float		m_lastTime;
 	float		m_maxFrame;
@@ -175,7 +177,7 @@ public:
 
 	static CBeam *BeamCreate( const char *pSpriteName, int width );
 
-	inline void LiveForTime( float time ) { SetThink(SUB_Remove); SetNextThink( time ); }
+	inline void LiveForTime( float time ) { SetThink(&CBeam::SUB_Remove); SetNextThink( time ); }
 	inline void	BeamDamageInstant( TraceResult *ptr, float damage ) 
 	{ 
 		pev->dmg = damage; 

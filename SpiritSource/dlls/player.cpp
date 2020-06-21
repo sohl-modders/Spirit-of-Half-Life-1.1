@@ -1,6 +1,6 @@
-/***
+	/***
 *
-*	Copyright (c) 1996-2001, Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -13,7 +13,6 @@
 *
 ****/
 /*
-
 
 ===== player.cpp ========================================================
 
@@ -35,6 +34,7 @@
 #include "decals.h"
 #include "gamerules.h"
 #include "game.h"
+#include "hltv.h"
 #include "effects.h" //LRC
 #include "movewith.h" //LRC
 
@@ -170,6 +170,10 @@ int gmsgFlashBattery = 0;
 int gmsgResetHUD = 0;
 int gmsgInitHUD = 0;
 int gmsgSetFog = 0; //LRC
+int gmsgKeyedDLight = 0;//LRC
+int gmsgSetSky = 0;		//LRC
+int gmsgHUDColor = 0;	//LRC
+int gmsgAddShine = 0;   // LRC
 int gmsgShowGameTitle = 0;
 int gmsgCurWeapon = 0;
 int gmsgHealth = 0;
@@ -177,7 +181,6 @@ int gmsgDamage = 0;
 int gmsgBattery = 0;
 int gmsgTrain = 0;
 int gmsgLogo = 0;
-int gmsgHUDColor = 0; //LRC
 int gmsgWeaponList = 0;
 int gmsgAmmoX = 0;
 int gmsgHudText = 0;
@@ -200,6 +203,10 @@ int gmsgShowMenu = 0;
 int gmsgGeigerRange = 0;
 int gmsgTeamNames = 0;
 int gmsgStatusIcon = 0; //LRC
+int gmsgStatusText = 0;
+int gmsgStatusValue = 0; 
+
+
 
 void LinkUserMessages( void )
 {
@@ -224,7 +231,13 @@ void LinkUserMessages( void )
 	gmsgWeaponList = REG_USER_MSG("WeaponList", -1);
 	gmsgResetHUD = REG_USER_MSG("ResetHUD", 1);		// called every respawn
 	gmsgInitHUD = REG_USER_MSG("InitHUD", 0 );		// called every time a new player joins the server
-	gmsgSetFog = REG_USER_MSG("SetFog", 9 ); //LRC
+
+	gmsgSetFog = REG_USER_MSG("SetFog", 9 );			//LRC
+	gmsgKeyedDLight = REG_USER_MSG("KeyedDLight", -1 );	//LRC
+	gmsgSetSky = REG_USER_MSG( "SetSky", 7 );			//LRC
+	gmsgHUDColor = REG_USER_MSG( "HUDColor", 4 );		//LRC
+	gmsgAddShine = REG_USER_MSG( "AddShine", -1 );      // LRC
+
 	gmsgShowGameTitle = REG_USER_MSG("GameTitle", 1);
 	gmsgDeathMsg = REG_USER_MSG( "DeathMsg", -1 );
 	gmsgScoreInfo = REG_USER_MSG( "ScoreInfo", 9 );
@@ -243,8 +256,11 @@ void LinkUserMessages( void )
 	gmsgFade = REG_USER_MSG("ScreenFade", sizeof(ScreenFade));
 	gmsgAmmoX = REG_USER_MSG("AmmoX", 2);
 	gmsgTeamNames = REG_USER_MSG( "TeamNames", -1 );
-	gmsgHUDColor = REG_USER_MSG( "HUDColor", 4 ); //LRC
 	gmsgStatusIcon = REG_USER_MSG( "StatusIcon", -1 );
+
+	gmsgStatusText = REG_USER_MSG("StatusText", -1);
+	gmsgStatusValue = REG_USER_MSG("StatusValue", 3); 
+
 }
 
 LINK_ENTITY_TO_CLASS( player, CBasePlayer );
@@ -527,8 +543,9 @@ int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 	}
 
 	// tell director about it
-	MESSAGE_BEGIN( MSG_SPEC, SVC_HLTV );
-		WRITE_BYTE ( DRC_EVENT );	// take damage event
+	MESSAGE_BEGIN( MSG_SPEC, SVC_DIRECTOR );
+		WRITE_BYTE ( 9 );	// command length in bytes
+		WRITE_BYTE ( DRC_CMD_EVENT );	// take damage event
 		WRITE_SHORT( ENTINDEX(this->edict()) );	// index number of primary entity
 		WRITE_SHORT( ENTINDEX(ENT(pevInflictor)) );	// index number of secondary entity
 		WRITE_LONG( 5 );   // eventflags (priority and flags)
@@ -787,7 +804,7 @@ void CBasePlayer::PackDeadPlayerItems( void )
 	pWeaponBox->pev->angles.x = 0;// don't let weaponbox tilt.
 	pWeaponBox->pev->angles.z = 0;
 
-	pWeaponBox->SetThink( CWeaponBox::Kill );
+	pWeaponBox->SetThink(& CWeaponBox::Kill );
 	pWeaponBox->SetNextThink( 120 );
 
 // back these two lists up to their first elements
@@ -1079,7 +1096,7 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	pev->angles.x = 0;
 	pev->angles.z = 0;
 
-	SetThink(PlayerDeathThink);
+	SetThink(&CBasePlayer::PlayerDeathThink);
 	SetNextThink( 0.1 );
 }
 
@@ -1606,7 +1623,7 @@ void CBasePlayer::PlayerUse ( void )
 	int caps;
 
 	UTIL_MakeVectors ( pev->v_angle );// so we know which way we are facing
-
+	
 	//LRC- try to get an exact entity to use.
 	// (is this causing "use-buttons-through-walls" problems? Surely not!)
 	UTIL_TraceLine( pev->origin + pev->view_ofs,
@@ -1652,7 +1669,7 @@ void CBasePlayer::PlayerUse ( void )
 	}
 
 	// Found an object
-	if ( pObject )
+	if (pObject )
 	{
 		//!!!UNDONE: traceline here to prevent USEing buttons through walls			
 		caps = pObject->ObjectCaps();
@@ -1820,6 +1837,110 @@ void CBasePlayer::AddPointsToTeam( int score, BOOL bAllowNegativeScore )
 		}
 	}
 }
+
+//Player ID
+void CBasePlayer::InitStatusBar()
+{
+	m_flStatusBarDisappearDelay = 0;
+	m_SbarString1[0] = m_SbarString0[0] = 0; 
+}
+
+void CBasePlayer::UpdateStatusBar()
+{
+	int newSBarState[ SBAR_END ];
+	char sbuf0[ SBAR_STRING_SIZE ];
+	char sbuf1[ SBAR_STRING_SIZE ];
+
+	memset( newSBarState, 0, sizeof(newSBarState) );
+	strcpy( sbuf0, m_SbarString0 );
+	strcpy( sbuf1, m_SbarString1 );
+
+	// Find an ID Target
+	TraceResult tr;
+	UTIL_MakeVectors( pev->v_angle + pev->punchangle );
+	Vector vecSrc = EyePosition();
+	Vector vecEnd = vecSrc + (gpGlobals->v_forward * MAX_ID_RANGE);
+	UTIL_TraceLine( vecSrc, vecEnd, dont_ignore_monsters, edict(), &tr);
+
+	if (tr.flFraction != 1.0)
+	{
+		if ( !FNullEnt( tr.pHit ) )
+		{
+			CBaseEntity *pEntity = CBaseEntity::Instance( tr.pHit );
+
+			if (pEntity->Classify() == CLASS_PLAYER )
+			{
+				newSBarState[ SBAR_ID_TARGETNAME ] = ENTINDEX( pEntity->edict() );
+				strcpy( sbuf1, "1 %p1\n2 Health: %i2%%\n3 Armor: %i3%%" );
+
+				// allies and medics get to see the targets health
+				if ( g_pGameRules->PlayerRelationship( this, pEntity ) == GR_TEAMMATE )
+				{
+					newSBarState[ SBAR_ID_TARGETHEALTH ] = 100 * (pEntity->pev->health / pEntity->pev->max_health);
+					newSBarState[ SBAR_ID_TARGETARMOR ] = pEntity->pev->armorvalue; //No need to get it % based since 100 it's the max.
+				}
+
+				m_flStatusBarDisappearDelay = gpGlobals->time + 1.0;
+			}
+		}
+		else if ( m_flStatusBarDisappearDelay > gpGlobals->time )
+		{
+			// hold the values for a short amount of time after viewing the object
+			newSBarState[ SBAR_ID_TARGETNAME ] = m_izSBarState[ SBAR_ID_TARGETNAME ];
+			newSBarState[ SBAR_ID_TARGETHEALTH ] = m_izSBarState[ SBAR_ID_TARGETHEALTH ];
+			newSBarState[ SBAR_ID_TARGETARMOR ] = m_izSBarState[ SBAR_ID_TARGETARMOR ];
+		}
+	}
+
+	BOOL bForceResend = FALSE;
+
+	if ( strcmp( sbuf0, m_SbarString0 ) )
+	{
+		MESSAGE_BEGIN( MSG_ONE, gmsgStatusText, NULL, pev );
+			WRITE_BYTE( 0 );
+			WRITE_STRING( sbuf0 );
+		MESSAGE_END();
+
+		strcpy( m_SbarString0, sbuf0 );
+
+		// make sure everything's resent
+		bForceResend = TRUE;
+	}
+
+	if ( strcmp( sbuf1, m_SbarString1 ) )
+	{
+		MESSAGE_BEGIN( MSG_ONE, gmsgStatusText, NULL, pev );
+			WRITE_BYTE( 1 );
+			WRITE_STRING( sbuf1 );
+		MESSAGE_END();
+
+		strcpy( m_SbarString1, sbuf1 );
+
+		// make sure everything's resent
+		bForceResend = TRUE;
+	}
+
+	// Check values and send if they don't match
+	for (int i = 1; i < SBAR_END; i++)
+	{
+		if ( newSBarState[i] != m_izSBarState[i] || bForceResend )
+		{
+			MESSAGE_BEGIN( MSG_ONE, gmsgStatusValue, NULL, pev );
+				WRITE_BYTE( i );
+				WRITE_SHORT( newSBarState[i] );
+			MESSAGE_END();
+
+			m_izSBarState[i] = newSBarState[i];
+		}
+	}
+}
+
+
+
+
+
+
+
 
 
 #define CLIMB_SHAKE_FREQUENCY	22	// how many frames in between screen shakes when climbing
@@ -2706,6 +2827,7 @@ pt_end:
 		if ( m_flAmmoStartCharge < -0.001 )
 			m_flAmmoStartCharge = -0.001;
 	}
+	
 
 #else
 	return;
@@ -2924,6 +3046,8 @@ void CBasePlayer::Spawn( void )
 	}
 
 	m_lastx = m_lasty = 0;
+	
+	m_flNextChatTime = gpGlobals->time;
 
 	g_pGameRules->PlayerSpawn( this );
 }
@@ -3292,7 +3416,7 @@ void CBloodSplat::Spawn ( entvars_t *pevOwner )
 	pev->angles = pevOwner->v_angle;
 	pev->owner = ENT(pevOwner);
 
-	SetThink ( Spray );
+	SetThink(&CBloodSplat:: Spray );
 	SetNextThink( 0.1 );
 }
 
@@ -3307,7 +3431,7 @@ void CBloodSplat::Spray ( void )
 
 		UTIL_BloodDecalTrace( &tr, BLOOD_COLOR_RED );
 	}
-	SetThink ( SUB_Remove );
+	SetThink(&CBloodSplat:: SUB_Remove );
 	SetNextThink( 0.1 );
 }
 
@@ -3385,8 +3509,8 @@ void CBasePlayer :: FlashlightTurnOn( void )
 #else
 		SetBits(pev->effects, EF_DIMLIGHT);
 		MESSAGE_BEGIN( MSG_ONE, gmsgFlashlight, NULL, pev );
-			WRITE_BYTE(1);
-			WRITE_BYTE(m_iFlashBattery);
+		WRITE_BYTE(1);
+		WRITE_BYTE(m_iFlashBattery);
 		MESSAGE_END();
 #endif
 
@@ -3432,6 +3556,7 @@ void CBasePlayer :: ForceClientDllUpdate( void )
 	m_iTrain |= TRAIN_NEW;  // Force new train message.
 	m_fWeapon = FALSE;          // Force weapon send
 	m_fKnownItem = FALSE;    // Force weaponinit messages.
+	m_fInitHUD = TRUE;		// Force HUD gmsgResetHUD message
 
 	// Now force all the necessary messages
 	//  to be sent.
@@ -3717,7 +3842,7 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		if ( pEntity )
 		{
 			if ( pEntity->pev->takedamage )
-				pEntity->SetThink(SUB_Remove);
+				pEntity->SetThink(&CBaseEntity::SUB_Remove);
 		}
 		break;
 	}
@@ -4012,7 +4137,10 @@ void CBasePlayer :: UpdateClientData( void )
 				FireTargets( "game_playerjoin", this, this, USE_TOGGLE, 0 );
 			}
 		}
+
 		FireTargets( "game_playerspawn", this, this, USE_TOGGLE, 0 );
+
+		InitStatusBar();
 	}
 
 	if ( m_iHideHUD != m_iClientHideHUD )
@@ -4126,7 +4254,7 @@ void CBasePlayer :: UpdateClientData( void )
 		}
 
 		MESSAGE_BEGIN( MSG_ONE, gmsgFlashBattery, NULL, pev );
-			WRITE_BYTE(m_iFlashBattery);
+		WRITE_BYTE(m_iFlashBattery);
 		MESSAGE_END();
 	}
 
@@ -4205,6 +4333,13 @@ void CBasePlayer :: UpdateClientData( void )
 	// Cache and client weapon change
 	m_pClientActiveItem = m_pActiveItem;
 	m_iClientFOV = m_iFOV;
+
+	// Update Status Bar
+	if ( m_flNextSBarUpdateTime < gpGlobals->time )
+	{
+		UpdateStatusBar();
+		m_flNextSBarUpdateTime = gpGlobals->time + 0.2;
+	}
 }
 
 
@@ -4753,6 +4888,7 @@ void CDeadHEV :: Spawn( void )
 	MonsterInitDead();
 }
 
+
 class CStripWeapons : public CPointEntity
 {
 public:
@@ -4954,7 +5090,7 @@ void CRevertSaved :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 {
 	UTIL_ScreenFadeAll( pev->rendercolor, Duration(), HoldTime(), pev->renderamt, FFADE_OUT );
 	SetNextThink( MessageTime() );
-	SetThink( MessageThink );
+	SetThink(&CRevertSaved :: MessageThink );
 }
 
 
@@ -4965,7 +5101,7 @@ void CRevertSaved :: MessageThink( void )
 	if ( nextThink > 0 ) 
 	{
 		SetNextThink( nextThink );
-		SetThink( LoadThink );
+		SetThink(&CRevertSaved :: LoadThink );
 	}
 	else
 		LoadThink();
@@ -5049,6 +5185,7 @@ void CInfoIntermission::Spawn( void )
 	pev->v_angle = g_vecZero;
 
 	SetNextThink( 2 );// let targets spawn!
+
 }
 
 void CInfoIntermission::Think ( void )

@@ -1,6 +1,6 @@
 /***
 *
-*	Copyright (c) 1999, 2000 Valve LLC. All rights reserved.
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
 *	
 *	This product contains software technology licensed from Id 
 *	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
@@ -23,12 +23,12 @@ CBaseEntity
 		CBaseAnimating
 			CBasePlayerItem
 				CBasePlayerWeapon
-			CBaseToggle
+		CBaseToggle
 				CBaseButton
 				CBaseDoor
 				CBaseTrigger
 				CBasePlatTrain
-				CBaseMonster
+			CBaseMonster
 					CCycler
 					CBasePlayer
 					CCineMonster
@@ -52,13 +52,8 @@ CBaseEntity
 // UNDONE: This will ignore transition volumes (trigger_transition), but not the PVS!!!
 #define		FCAP_FORCE_TRANSITION		0x00000080		// ALWAYS goes across transitions
 
-#ifndef SAVERESTORE_H
 #include "saverestore.h"
-#endif
-
-#ifndef SCHEDULE_H
 #include "schedule.h"
-#endif
 
 #ifndef MONSTEREVENT_H
 #include "monsterevent.h"
@@ -69,7 +64,7 @@ CBaseEntity
 #ifdef _WIN32
 #define EXPORT	_declspec( dllexport )
 #else
-#define EXPORT
+#define EXPORT	/* */
 #endif
 
 extern "C" EXPORT int GetEntityAPI( DLL_FUNCTIONS *pFunctionTable, int interfaceVersion );
@@ -132,7 +127,6 @@ typedef void (CBaseEntity::*USEPTR)( CBaseEntity *pActivator, CBaseEntity *pCall
 #define CLASS_FACTION_B			15
 #define CLASS_FACTION_C			16
 #define	CLASS_BARNACLE			99 // special because no one pays attention to it, and it eats a wide cross-section of creatures.
-								   // also special because barnacles don't use it, only Xen Trees! --LRC
 
 class CBaseEntity;
 class CBaseMonster;
@@ -162,6 +156,7 @@ public:
 	CBaseEntity * operator ->();
 };
 
+
 //
 // Base Entity.  All entity types derive from this
 //
@@ -186,7 +181,7 @@ public:
 	Vector				m_vecPostAssistVel; // LRC
 	Vector				m_vecPostAssistAVel; // LRC
 	float				m_fNextThink; // LRC - for SetNextThink and SetPhysThink. Marks the time when a think will be performed - not necessarily the same as pev->nextthink!
-	float				m_fPevNextThink; // LRC - always set equal to pev->nextthink, so that we can tell when the latter gets changed by the @#$^¬! engine.
+	float				m_fPevNextThink; // LRC - always set equal to pev->nextthink, so that we can tell when the latter gets changed by the @#$^Â¬! engine.
 	int					m_iLFlags; // LRC- a new set of flags. (pev->spawnflags and pev->flags are full...)
 	virtual void		DesiredAction( void ) {}; // LRC - for postponing stuff until PostThink time, not as a think.
 	int					m_iStyle; // LRC - almost anything can have a lightstyle these days...
@@ -270,8 +265,8 @@ public:
 // Classify - returns the type of group (e.g., "alien monster", or "human military" so that monsters
 // on the same side won't attack each other, even if they have different classnames.
 	virtual int Classify ( void ) { return CLASS_NONE; };
-	virtual void DeathNotice ( entvars_t *pevChild ) {}// monster maker children use this to tell
-													   // the monster maker that they have died.
+	virtual void DeathNotice ( entvars_t *pevChild ) {}// monster maker children use this to tell the monster maker that they have died.
+
 
 // LRC- this supports a global concept of "entities with states", so that state_watchers and
 // mastership (mastery? masterhood?) can work universally.
@@ -316,6 +311,7 @@ public:
 	virtual	BOOL	IsPlayer( void ) { return FALSE; }
 	virtual BOOL	IsNetClient( void ) { return FALSE; }
 	virtual const char *TeamID( void ) { return ""; }
+
 
 //	virtual void	SetActivator( CBaseEntity *pActivator ) {}
 	virtual CBaseEntity *GetNextTarget( void );
@@ -482,8 +478,8 @@ public:
 inline BOOL FNullEnt( CBaseEntity *ent )	{ return ent == NULL || FNullEnt( ent->edict() ); }
 
 // Ugly technique to override base member functions
-// Normally it's illegal for a pointer to a member function of a base class to be cast to a pointer
-// to a member function of a derived class.  static_cast is a sleezy way around that problem.
+// Normally it's illegal to cast a pointer to a member function of a derived class to a pointer to a 
+// member function of a base class.  static_cast is a sleezy way around that problem.
 
 #ifdef _DEBUG
 
@@ -679,12 +675,15 @@ public:
 	void EXPORT AngularMoveDoneNow( void );
 	BOOL IsLockedByMaster( void );
 
-
 	static float		AxisValue( int flags, const Vector &angles );
 	static void			AxisDir( entvars_t *pev );
 	static float		AxisDelta( int flags, const Vector &angle1, const Vector &angle2 );
 
 	string_t m_sMaster;		// If this button has a master switch, this is the targetname.
+							// A master switch must be of the multisource type. If all 
+							// of the switches in the multisource have been triggered, then
+							// the button will be allowed to operate. Otherwise, it will be
+							// deactivated.
 };
 #define SetMoveDone( a ) m_pfnCallWhenMoveDone = static_cast <void (CBaseToggle::*)(void)> (a)
 
@@ -803,10 +802,10 @@ class CSound;
 
 char *ButtonSound( int sound );				// get string of button sound number
 
+
 //
 // Generic Button
 //
-
 class CBaseButton : public CBaseToggle
 {
 public:
